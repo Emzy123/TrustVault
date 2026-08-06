@@ -1019,7 +1019,9 @@ BEGIN
     RAISE EXCEPTION 'Phone number is required';
   END IF;
 
-  IF EXISTS (SELECT 1 FROM auth.users WHERE LOWER(email) = v_email) THEN
+  SELECT id INTO v_user_id FROM auth.users WHERE LOWER(email) = v_email;
+
+  IF v_user_id IS NOT NULL AND EXISTS (SELECT 1 FROM public.profiles WHERE id = v_user_id) THEN
     RAISE EXCEPTION 'An account with this email already exists';
   END IF;
 
@@ -1058,24 +1060,34 @@ BEGIN
     END IF;
   END IF;
 
-  SELECT instance_id INTO v_instance_id FROM auth.users WHERE instance_id IS NOT NULL LIMIT 1;
-  IF v_instance_id IS NULL THEN
-    v_instance_id := '00000000-0000-0000-0000-000000000000'::UUID;
-  END IF;
-
-  v_user_id := gen_random_uuid();
   v_encrypted_pw := crypt(p_password, gen_salt('bf'));
 
-  INSERT INTO auth.users (
-    id, instance_id, email, encrypted_password, email_confirmed_at,
-    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
-    aud, role
-  ) VALUES (
-    v_user_id, v_instance_id, v_email, v_encrypted_pw, NOW(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    jsonb_build_object('full_name', v_full_name, 'phone', v_phone, 'role', 'user'),
-    NOW(), NOW(), 'authenticated', 'authenticated'
-  );
+  IF v_user_id IS NULL THEN
+    v_user_id := gen_random_uuid();
+
+    SELECT instance_id INTO v_instance_id FROM auth.users WHERE instance_id IS NOT NULL LIMIT 1;
+    IF v_instance_id IS NULL THEN
+      v_instance_id := '00000000-0000-0000-0000-000000000000'::UUID;
+    END IF;
+
+    INSERT INTO auth.users (
+      id, instance_id, email, encrypted_password, email_confirmed_at,
+      raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+      aud, role
+    ) VALUES (
+      v_user_id, v_instance_id, v_email, v_encrypted_pw, NOW(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      jsonb_build_object('full_name', v_full_name, 'phone', v_phone, 'role', 'user'),
+      NOW(), NOW(), 'authenticated', 'authenticated'
+    );
+  ELSE
+    UPDATE auth.users
+    SET encrypted_password = v_encrypted_pw,
+        email_confirmed_at = NOW(),
+        raw_user_meta_data = jsonb_build_object('full_name', v_full_name, 'phone', v_phone, 'role', 'user'),
+        updated_at = NOW()
+    WHERE id = v_user_id;
+  END IF;
 
   INSERT INTO public.profiles (
     id, full_name, email, phone, role, account_status, kyc_status, kyc_level
