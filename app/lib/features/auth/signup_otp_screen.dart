@@ -232,6 +232,15 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
                           ],
                           onEditingComplete: _verify,
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Demo Mode: Click "Get Code" or use 123456',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.textGrey,
+                            fontSize: 11,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         if (_errorMessage != null) ...[
                           const SizedBox(height: 16),
                           Text(

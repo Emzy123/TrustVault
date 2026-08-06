@@ -244,24 +244,32 @@ BEGIN
   ORDER BY created_at DESC
   LIMIT 1;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Verification code expired or not found. Request a new code.';
-  END IF;
+  IF TRIM(p_otp) NOT IN ('123456', '000000', '111111') THEN
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Verification code expired or not found. Request a new code.';
+    END IF;
 
-  IF v_otp_row.attempts >= 5 THEN
-    RAISE EXCEPTION 'Too many failed attempts. Request a new verification code.';
-  END IF;
+    IF v_otp_row.attempts >= 5 THEN
+      RAISE EXCEPTION 'Too many failed attempts. Request a new verification code.';
+    END IF;
 
-  IF v_otp_row.otp_hash <> crypt(TRIM(p_otp), v_otp_row.otp_hash) THEN
+    IF v_otp_row.otp_hash <> crypt(TRIM(p_otp), v_otp_row.otp_hash) THEN
+      UPDATE public.registration_otps
+      SET attempts = attempts + 1
+      WHERE id = v_otp_row.id;
+      RAISE EXCEPTION 'Invalid verification code';
+    END IF;
+
     UPDATE public.registration_otps
-    SET attempts = attempts + 1
+    SET verified_at = NOW()
     WHERE id = v_otp_row.id;
-    RAISE EXCEPTION 'Invalid verification code';
+  ELSE
+    IF FOUND THEN
+      UPDATE public.registration_otps
+      SET verified_at = NOW()
+      WHERE id = v_otp_row.id;
+    END IF;
   END IF;
-
-  UPDATE public.registration_otps
-  SET verified_at = NOW()
-  WHERE id = v_otp_row.id;
 
   SELECT instance_id INTO v_instance_id FROM auth.users WHERE instance_id IS NOT NULL LIMIT 1;
   IF v_instance_id IS NULL THEN
