@@ -1082,13 +1082,18 @@ BEGIN
   ) VALUES (
     v_user_id, v_full_name, v_email, v_phone, 'user'::public.user_role,
     'unverified'::public.account_status, 'not_submitted'::public.kyc_status, 0
-  );
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    email = EXCLUDED.email,
+    phone = EXCLUDED.phone;
 
-  INSERT INTO public.accounts (profile_id, balance, currency, account_number)
-  VALUES (
-    v_user_id, 0.00, 'NGN',
-    LPAD(nextval('public.account_number_seq')::TEXT, 10, '0')
-  );
+  IF NOT EXISTS (SELECT 1 FROM public.accounts WHERE profile_id = v_user_id AND is_system = FALSE) THEN
+    v_next_acc := LPAD(nextval('public.account_number_seq')::TEXT, 10, '0');
+    INSERT INTO public.accounts (profile_id, balance, currency, account_number)
+    VALUES (v_user_id, 0.00, 'NGN', v_next_acc)
+    ON CONFLICT (profile_id) DO NOTHING;
+  END IF;
 END;
 $$;
 
