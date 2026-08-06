@@ -171,7 +171,10 @@ BEGIN
   DELETE FROM public.flags
   WHERE raised_by = p_profile_id
      OR transaction_id IN (
-       SELECT id FROM public.transactions WHERE initiated_by = p_profile_id
+       SELECT id FROM public.transactions
+       WHERE initiated_by = p_profile_id
+          OR from_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
+          OR to_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
      );
 
   UPDATE public.funding_requests SET reviewed_by = NULL WHERE reviewed_by = p_profile_id;
@@ -181,9 +184,13 @@ BEGIN
   WHERE invited_by = p_profile_id OR profile_id = p_profile_id;
 
   DELETE FROM public.ledger_entries
-  WHERE account_id IN (
-    SELECT id FROM public.accounts WHERE profile_id = p_profile_id
-  );
+  WHERE account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
+     OR transaction_id IN (
+       SELECT id FROM public.transactions
+       WHERE initiated_by = p_profile_id
+          OR from_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
+          OR to_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
+     );
 
   DELETE FROM public.transactions
   WHERE initiated_by = p_profile_id

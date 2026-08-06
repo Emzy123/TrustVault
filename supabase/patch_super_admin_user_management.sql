@@ -174,7 +174,10 @@ BEGIN
   PERFORM set_config('trustvault.allow_ledger_deletion', 'true', true);
 
   DELETE FROM public.flags WHERE raised_by = p_profile_id OR transaction_id IN (
-    SELECT id FROM public.transactions WHERE initiated_by = p_profile_id
+    SELECT id FROM public.transactions
+    WHERE initiated_by = p_profile_id
+       OR from_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
+       OR to_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
   );
   DELETE FROM public.kyc_submissions WHERE profile_id = p_profile_id;
   DELETE FROM public.funding_requests WHERE profile_id = p_profile_id;
@@ -182,6 +185,11 @@ BEGIN
 
   DELETE FROM public.ledger_entries WHERE account_id IN (
     SELECT id FROM public.accounts WHERE profile_id = p_profile_id
+  ) OR transaction_id IN (
+    SELECT id FROM public.transactions
+    WHERE initiated_by = p_profile_id
+       OR from_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
+       OR to_account_id IN (SELECT id FROM public.accounts WHERE profile_id = p_profile_id)
   );
 
   DELETE FROM public.transactions WHERE initiated_by = p_profile_id
