@@ -405,7 +405,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.submit_kyc(
   p_id_type TEXT,
   p_id_number TEXT,
-  p_dob TEXT,
+  p_dob DATE,
   p_address TEXT,
   p_document_url TEXT DEFAULT NULL
 )
@@ -417,7 +417,6 @@ AS $$
 DECLARE
   v_submission_id UUID;
   v_profile public.profiles%ROWTYPE;
-  v_dob_date DATE;
 BEGIN
   PERFORM public.enforce_rate_limit('kyc_submit', 10, 3600);
 
@@ -442,13 +441,7 @@ BEGIN
     RAISE EXCEPTION 'Valid ID number is required';
   END IF;
 
-  BEGIN
-    v_dob_date := p_dob::DATE;
-  EXCEPTION WHEN OTHERS THEN
-    RAISE EXCEPTION 'Invalid date of birth format';
-  END;
-
-  IF v_dob_date IS NULL OR v_dob_date > CURRENT_DATE - INTERVAL '18 years' THEN
+  IF p_dob IS NULL OR p_dob > CURRENT_DATE - INTERVAL '18 years' THEN
     RAISE EXCEPTION 'You must be at least 18 years old';
   END IF;
 
