@@ -95,6 +95,25 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
     }
   }
 
+  Future<void> _fetchDemoCode() async {
+    setState(() => _errorMessage = null);
+    try {
+      final code = await EmailService(Supabase.instance.client).getDemoOtp(widget.email);
+      if (code != null && code.isNotEmpty) {
+        setState(() => _otpController.text = code);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Demo Mode: Verification code [$code] autofilled.')),
+          );
+        }
+      } else {
+        setState(() => _errorMessage = 'No active demo code found. Click "Resend code".');
+      }
+    } catch (_) {
+      setState(() => _errorMessage = 'Could not fetch demo verification code.');
+    }
+  }
+
   void _showWelcomeDialog() {
     showDialog(
       context: context,
@@ -235,11 +254,21 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
                               : const Text('Verify & create account'),
                         ),
                         const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: _isResending ? null : _resend,
-                          child: _isResending
-                              ? const Text('Sending…')
-                              : const Text('Resend code'),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              onPressed: _isResending ? null : _resend,
+                              child: _isResending
+                                  ? const Text('Sending…')
+                                  : const Text('Resend code'),
+                            ),
+                            TextButton.icon(
+                              icon: const Icon(Icons.key_outlined, size: 16),
+                              label: const Text('Get Code (Demo Mode)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              onPressed: _fetchDemoCode,
+                            ),
+                          ],
                         ),
                       ],
                     ),

@@ -54,6 +54,19 @@ class EmailService {
   Future<void> resendRegistrationOtp(String email) =>
       requestRegistrationOtp(email);
 
+  /// Retrieves generated OTP code directly for demo mode if Brevo email delivery is unavailable.
+  Future<String?> getDemoOtp(String email) async {
+    try {
+      final res = await _client.rpc<String?>(
+        'get_demo_otp',
+        params: {'p_email': email.trim()},
+      );
+      return res;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _dispatchEmail(String outboxId) async {
     try {
       await _client.functions.invoke(
