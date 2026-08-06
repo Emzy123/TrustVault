@@ -1081,7 +1081,7 @@ BEGIN
     id, full_name, email, phone, role, account_status, kyc_status, kyc_level
   ) VALUES (
     v_user_id, v_full_name, v_email, v_phone, 'user'::public.user_role,
-    'unverified'::public.account_status, 'unsubmitted'::public.kyc_status, 0
+    'unverified'::public.account_status, 'not_submitted'::public.kyc_status, 0
   );
 
   INSERT INTO public.accounts (profile_id, balance, currency, account_number)
