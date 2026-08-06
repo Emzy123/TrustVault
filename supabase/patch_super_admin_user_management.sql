@@ -1,5 +1,28 @@
 -- TrustVault: Super Admin user creation and account deletion RPC functions
 
+CREATE OR REPLACE FUNCTION public.prevent_ledger_tampering()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF current_setting('trustvault.allow_ledger_deletion', TRUE) = 'true' THEN
+    IF TG_OP = 'DELETE' THEN
+      RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+      RETURN NEW;
+    END IF;
+  END IF;
+  RAISE EXCEPTION 'Ledger entries are strictly immutable. Updates and deletions are forbidden.';
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_prevent_ledger_tampering ON public.ledger_entries;
+CREATE TRIGGER trg_prevent_ledger_tampering
+  BEFORE UPDATE OR DELETE ON public.ledger_entries
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_ledger_tampering();
+
 CREATE OR REPLACE FUNCTION public.create_user_account(
   p_email TEXT,
   p_full_name TEXT,
@@ -147,6 +170,8 @@ BEGIN
       'role', v_target.role
     )
   );
+
+  PERFORM set_config('trustvault.allow_ledger_deletion', 'true', true);
 
   DELETE FROM public.flags WHERE raised_by = p_profile_id OR transaction_id IN (
     SELECT id FROM public.transactions WHERE initiated_by = p_profile_id

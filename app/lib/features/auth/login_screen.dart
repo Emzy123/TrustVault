@@ -29,14 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _fillDemoAccount(String email) {
-    setState(() {
-      _emailController.text = email;
-      _passwordController.text = 'Password123!';
-      _errorMessage = null;
-    });
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -218,8 +210,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildDemoAccountsCard(theme),
-                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -235,60 +225,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDemoAccountsCard(ThemeData theme) {
-    return Card(
-      color: AppColors.surfaceLight,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.touch_app_outlined, size: 18, color: AppColors.secondaryBlue),
-                const SizedBox(width: 8),
-                Text(
-                  'Quick Demo Accounts (1-Click Fill)',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryNavy,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _demoChip('Alice (Active)', 'alice@trustvault.demo', AppColors.success),
-                _demoChip('Bob (Verified)', 'bob@trustvault.demo', AppColors.secondaryBlue),
-                _demoChip('Charlie (New)', 'charlie@trustvault.demo', AppColors.accentGold),
-                _demoChip('Admin', 'admin@trustvault.demo', AppColors.primaryNavy),
-                _demoChip('Super Admin', 'superadmin@trustvault.demo', AppColors.error),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _demoChip(String label, String email, Color color) {
-    return ActionChip(
-      avatar: CircleAvatar(
-        backgroundColor: color,
-        radius: 10,
-        child: Text(
-          label[0],
-          style: const TextStyle(fontSize: 10, color: AppColors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      onPressed: () => _fillDemoAccount(email),
     );
   }
 }

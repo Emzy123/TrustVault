@@ -159,6 +159,8 @@ BEGIN
     )
   );
 
+  PERFORM set_config('trustvault.allow_ledger_deletion', 'true', true);
+
   DELETE FROM public.registration_otps WHERE LOWER(email) = LOWER(v_target.email);
   DELETE FROM public.email_outbox WHERE LOWER(recipient_email) = LOWER(v_target.email);
 

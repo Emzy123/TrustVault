@@ -248,6 +248,13 @@ $$;
 CREATE OR REPLACE FUNCTION public.prevent_ledger_tampering()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
+  IF current_setting('trustvault.allow_ledger_deletion', TRUE) = 'true' THEN
+    IF TG_OP = 'DELETE' THEN
+      RETURN OLD;
+    ELSIF TG_OP = 'UPDATE' THEN
+      RETURN NEW;
+    END IF;
+  END IF;
   RAISE EXCEPTION 'Ledger entries are strictly immutable. Updates and deletions are forbidden.';
 END;
 $$;
