@@ -1,0 +1,7 @@
+{
+  "buildCommand": "flutter pub get && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=PASSWORD_RESET_REDIRECT=$APP_URL",
+  "outputDirectory": "build/web",
+  "installCommand": "echo 'Install Flutter in project settings or use GitHub Actions; see HOSTING.md'",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

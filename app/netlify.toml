@@ -1,0 +1,9 @@
+# Deploy app/build/web (run ../scripts/build-web.sh first), or set base = app in Netlify UI.
+[build]
+  publish = "build/web"
+  command = "flutter pub get && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=PASSWORD_RESET_REDIRECT=$APP_URL"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

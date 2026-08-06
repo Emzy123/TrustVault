@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your TrustVault Verification Code</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F3F4F6; margin: 0; padding: 0; color: #1F2937; }
+    .email-container { max-width: 600px; margin: 40px auto; background-color: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); }
+    .header { background-color: #1B2A4A; padding: 32px 24px; text-align: center; }
+    .logo-text { color: #FFFFFF; font-size: 26px; font-weight: 700; }
+    .logo-accent { color: #B8860B; }
+    .body-content { padding: 40px 32px; }
+    h1 { color: #1B2A4A; font-size: 22px; font-weight: 700; margin-top: 0; margin-bottom: 16px; }
+    p { color: #4B5563; font-size: 15px; line-height: 1.6; margin-bottom: 24px; }
+    .otp-box { background: #F8FAFC; border: 2px dashed #2F5C9E; border-radius: 12px; padding: 24px; text-align: center; margin: 32px 0; }
+    .otp-code { font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #1B2A4A; }
+    .info-card { background-color: #F8FAFC; border-left: 4px solid #B8860B; padding: 16px 20px; border-radius: 0 8px 8px 0; margin-bottom: 24px; }
+    .info-card p { margin: 0; font-size: 14px; color: #374151; }
+    .footer { background-color: #F9FAFB; padding: 24px 32px; border-top: 1px solid #E5E7EB; font-size: 13px; color: #9CA3AF; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <div class="logo-text">Trust<span class="logo-accent">Vault</span></div>
+      <div style="color: #94A3B8; font-size: 12px; margin-top: 4px; letter-spacing: 1px;">SECURE DIGITAL BANKING</div>
+    </div>
+    <div class="body-content">
+      <h1>Your verification code</h1>
+      <p>Enter this one-time code in the TrustVault app to verify your email and complete registration.</p>
+      <div class="otp-box">
+        <div class="otp-code">{{ .Token }}</div>
+      </div>
+      <div class="info-card">
+        <p><strong>Security tip:</strong> This code expires in {{ .TokenExpiryHours }} hour(s). Never share it with anyone.</p>
+      </div>
+    </div>
+    <div class="footer">
+      <p>&copy; 2026 TrustVault Software Labs. All rights reserved.</p>
+      <p>If you did not create a TrustVault account, you can safely ignore this email.</p>
+    </div>
+  </div>
+</body>
+</html>

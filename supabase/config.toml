@@ -1,0 +1,68 @@
+# TrustVault local Supabase configuration
+# Run: supabase start (requires Docker)
+# Apply migrations: supabase db reset
+
+project_id = "trustvault"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed_auth.sql", "./seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+otp_length = 6
+otp_expiry = 3600
+max_frequency = "1m"
+
+[auth.email.template.confirmation]
+subject = "Verify your TrustVault account"
+content_path = "./supabase/email_templates/confirm_signup.html"
+
+[auth.email.template.recovery]
+subject = "Reset your TrustVault password"
+content_path = "./supabase/email_templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Your TrustVault sign-in link"
+content_path = "./supabase/email_templates/confirm_signup.html"
+
+# Brevo SMTP for Supabase Auth emails (password reset, confirmations).
+# Create an SMTP key in Brevo: SMTP & API → SMTP keys.
+# For local dev, leave enabled=false to use Inbucket (http://localhost:54324).
+[auth.email.smtp]
+enabled = false
+host = "smtp-relay.brevo.com"
+port = 587
+user = "env(BREVO_SMTP_USER)"
+pass = "env(BREVO_SMTP_KEY)"
+admin_email = "env(BREVO_SENDER_EMAIL)"
+sender_name = "TrustVault"
