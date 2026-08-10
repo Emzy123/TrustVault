@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/config/env.dart';
 import '../models/profile.dart';
 
 class AuthService {
@@ -65,10 +66,7 @@ class AuthService {
   Future<void> resetPassword(String email) {
     return _client.auth.resetPasswordForEmail(
       email.trim(),
-      redirectTo: const String.fromEnvironment(
-        'PASSWORD_RESET_REDIRECT',
-        defaultValue: 'http://localhost:3000',
-      ),
+      redirectTo: Env.passwordResetRedirectUrl,
     );
   }
 }

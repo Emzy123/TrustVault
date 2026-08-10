@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_decorations.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/premium_widgets.dart';
 
 class ProfileSupportScreen extends StatefulWidget {
   const ProfileSupportScreen({super.key});
@@ -48,7 +50,7 @@ class _ProfileSupportScreenState extends State<ProfileSupportScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => const _SupportChatSheet(),
     );
@@ -56,111 +58,104 @@ class _ProfileSupportScreenState extends State<ProfileSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final filteredFaqs = _faqs
         .where((item) =>
             item.question.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             item.answer.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Help & Support'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/app/profile'),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+    return ProfileSubScreenScaffold(
+      title: 'Help & Support',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            decoration: AppDecorations.heroCard(),
+            padding: const EdgeInsets.all(24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Card(
-                  color: AppColors.primaryNavy,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                const Icon(Icons.headset_mic_outlined, color: AppColors.accentGold, size: 36),
+                const SizedBox(height: 12),
+                Text(
+                  'How can we help you today?',
+                  style: AppTypography.textTheme.headlineSmall?.copyWith(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Browse frequently asked questions or connect with our support team.',
+                  style: AppTypography.textTheme.bodySmall?.copyWith(color: AppColors.white.withValues(alpha: 0.75)),
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accentGold,
+                    foregroundColor: AppColors.primaryNavy,
+                  ),
+                  onPressed: _openLiveChat,
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  label: const Text('Start Live Chat'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _searchController,
+            onChanged: (val) => setState(() => _searchQuery = val),
+            decoration: InputDecoration(
+              hintText: 'Search help topics...',
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'Frequently Asked Questions'),
+          const SizedBox(height: 12),
+          if (filteredFaqs.isEmpty)
+            PremiumCard(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Center(child: Text('No matching help topics found.', style: AppTypography.textTheme.bodySmall)),
+              ),
+            )
+          else
+            ...filteredFaqs.map(
+              (faq) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: PremiumCard(
+                  padding: EdgeInsets.zero,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                      title: Text(
+                        faq.question,
+                        style: AppTypography.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
                       children: [
-                        const Icon(Icons.headset_mic_outlined, color: AppColors.accentGold, size: 36),
-                        const SizedBox(height: 12),
-                        Text(
-                          'How can we help you today?',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Browse frequently asked questions or connect with our support team.',
-                          style: TextStyle(color: AppColors.white.withValues(alpha: 0.8), fontSize: 13),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.accentGold,
-                            foregroundColor: AppColors.primaryNavy,
-                          ),
-                          onPressed: _openLiveChat,
-                          icon: const Icon(Icons.chat_bubble_outline),
-                          label: const Text('Start Live Chat'),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                          child: Text(faq.answer, style: AppTypography.textTheme.bodySmall?.copyWith(height: 1.5)),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _searchController,
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  decoration: InputDecoration(
-                    hintText: 'Search help topics...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text('Frequently Asked Questions', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 12),
-                if (filteredFaqs.isEmpty)
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: Text('No matching help topics found.')),
-                    ),
-                  )
-                else
-                  ...filteredFaqs.map(
-                    (faq) => Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ExpansionTile(
-                        title: Text(faq.question, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            child: Text(faq.answer, style: const TextStyle(color: AppColors.textGrey, height: 1.5)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -216,14 +211,21 @@ class _SupportChatSheetState extends State<_SupportChatSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.support_agent, color: AppColors.secondaryBlue),
-                  SizedBox(width: 8),
-                  Text('TrustVault Live Assistant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.support_agent_rounded, color: AppColors.secondaryBlue),
+                  ),
+                  const SizedBox(width: 10),
+                  Text('TrustVault Live Assistant', style: AppTypography.textTheme.titleMedium),
                 ],
               ),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const Divider(),
@@ -239,12 +241,15 @@ class _SupportChatSheetState extends State<_SupportChatSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isUser ? AppColors.secondaryBlue : AppColors.surfaceLight,
-                        borderRadius: BorderRadius.circular(12),
+                        color: isUser ? AppColors.secondaryBlue : AppColors.neutralLightGrey,
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
                         _messages[index]['text']!,
-                        style: TextStyle(color: isUser ? AppColors.white : AppColors.textDark, fontSize: 14),
+                        style: TextStyle(
+                          color: isUser ? AppColors.white : AppColors.textDark,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -263,7 +268,7 @@ class _SupportChatSheetState extends State<_SupportChatSheet> {
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                icon: const Icon(Icons.send),
+                icon: const Icon(Icons.send_rounded),
                 onPressed: _send,
               ),
             ],

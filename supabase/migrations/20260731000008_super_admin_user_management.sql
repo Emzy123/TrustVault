@@ -38,6 +38,10 @@ BEGIN
   END IF;
   v_role := p_role::public.user_role;
 
+  IF EXISTS (SELECT 1 FROM auth.users WHERE LOWER(email) = v_email) THEN
+    RAISE EXCEPTION 'An account with this email already exists';
+  END IF;
+
   IF EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(email) = v_email) THEN
     RAISE EXCEPTION 'An account with this email already exists';
   END IF;
@@ -75,6 +79,31 @@ BEGIN
     '', '', '', '',
     '{"provider":"email","providers":["email"]}'::jsonb,
     jsonb_build_object('full_name', v_full_name),
+    NOW(),
+    NOW()
+  );
+
+  INSERT INTO auth.identities (
+    id,
+    user_id,
+    identity_data,
+    provider,
+    provider_id,
+    last_sign_in_at,
+    created_at,
+    updated_at
+  ) VALUES (
+    gen_random_uuid(),
+    v_user_id,
+    jsonb_build_object(
+      'sub', v_user_id::text,
+      'email', v_email,
+      'email_verified', true,
+      'phone_verified', false
+    ),
+    'email',
+    v_user_id::text,
+    NOW(),
     NOW(),
     NOW()
   );

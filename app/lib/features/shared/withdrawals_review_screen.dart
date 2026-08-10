@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
+import '../../core/widgets/responsive_layout.dart';
 import '../../services/admin_service.dart';
 import '../../services/wallet_service.dart';
 import '../shared/state_widgets.dart';
@@ -180,53 +183,34 @@ class _WithdrawalsReviewScreenState extends State<WithdrawalsReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          padding: EdgeInsets.fromLTRB(
+            context.adminPagePadding.left,
+            context.adminPagePadding.top,
+            context.adminPagePadding.right,
+            16,
+          ),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(widget.title, style: theme.textTheme.headlineLarge),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.subtitle,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-                ),
-              ],
+            child: AdminPageHeader(
+              title: widget.title,
+              subtitle: widget.subtitle,
+              onRefresh: _load,
             ),
           ),
         ),
         if (_loading && _queue.isEmpty)
-          const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          )
+          const SliverFillRemaining(child: Center(child: CircularProgressIndicator(color: AppColors.secondaryBlue)))
         else if (_error != null && _queue.isEmpty)
+          SliverToBoxAdapter(child: Padding(padding: EdgeInsets.symmetric(horizontal: context.adminPagePadding.left), child: ErrorBanner(message: _error!)))
+        else if (_queue.isEmpty)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ErrorBanner(message: _error!),
-            ),
-          )
-        else if (_queue.isEmpty)
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Card(
+              padding: EdgeInsets.symmetric(horizontal: context.adminPagePadding.left),
+              child: PremiumCard(
                 child: EmptyState(
-                  icon: Icons.check_circle_outline,
+                  icon: Icons.check_circle_outline_rounded,
                   title: 'No pending withdrawal requests',
                   message: 'All withdrawal requests have been resolved.',
                 ),
@@ -235,10 +219,15 @@ class _WithdrawalsReviewScreenState extends State<WithdrawalsReviewScreen> {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: EdgeInsets.fromLTRB(
+              context.adminPagePadding.left,
+              8,
+              context.adminPagePadding.right,
+              context.adminPagePadding.bottom,
+            ),
             sliver: SliverList.separated(
               itemCount: _queue.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final item = _queue[index];
                 final account = item['accounts'] as Map<String, dynamic>?;
@@ -252,55 +241,40 @@ class _WithdrawalsReviewScreenState extends State<WithdrawalsReviewScreen> {
                 final txId = item['id'] as String;
                 final createdAt = DateTime.parse(item['created_at'] as String);
 
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
+                return PremiumCard(
+                  padding: const EdgeInsets.all(18),
+                  child: ResponsiveReviewCard(
+                    leading: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.outbound_rounded, color: AppColors.secondaryBlue),
+                    ),
+                    body: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.secondaryBlue.withValues(alpha: 0.15),
-                          child: const Icon(Icons.outbound, color: AppColors.secondaryBlue),
+                        Text(fullName, style: AppTypography.textTheme.titleMedium),
+                        Text(email, style: AppTypography.textTheme.bodySmall),
+                        Text('Account: $accountStatus · KYC: $kycStatus', style: AppTypography.textTheme.bodySmall),
+                        const SizedBox(height: 8),
+                        Text(formatNaira(amount), style: AppTypography.textTheme.headlineSmall?.copyWith(color: AppColors.primaryNavy)),
+                        if (note != null && note.isNotEmpty) Text('Note: $note', style: AppTypography.textTheme.bodySmall),
+                        Text('Requested at: ${formatDate(createdAt)}', style: AppTypography.textTheme.bodySmall),
+                      ],
+                    ),
+                    actions: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
+                          onPressed: () => _review(txId, false),
+                          child: const Text('Decline'),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(fullName, style: theme.textTheme.titleMedium),
-                              Text(email, style: theme.textTheme.bodySmall),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Account: $accountStatus · KYC: $kycStatus',
-                                style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Requested: ${formatNaira(amount)}',
-                                style: theme.textTheme.titleLarge?.copyWith(color: AppColors.primaryNavy),
-                              ),
-                              if (note != null && note.isNotEmpty)
-                                Text('Note: $note', style: theme.textTheme.bodySmall),
-                              Text('Requested at: ${formatDate(createdAt)}', style: theme.textTheme.bodySmall),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            OutlinedButton(
-                              style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
-                              onPressed: () => _review(txId, false),
-                              child: const Text('Decline'),
-                            ),
-                            FilledButton(
-                              onPressed: () => _review(txId, true),
-                              child: const Text('Approve & Release'),
-                            ),
-                          ],
-                        ),
+                        FilledButton(onPressed: () => _review(txId, true), child: const Text('Approve & Release')),
                       ],
                     ),
                   ),

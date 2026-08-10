@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
 import '../../services/email_service.dart';
+import '../shared/state_widgets.dart';
 
 class SignUpOtpScreen extends StatefulWidget {
   const SignUpOtpScreen({
@@ -79,8 +82,7 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
     });
 
     try {
-      await EmailService(Supabase.instance.client)
-          .resendRegistrationOtp(widget.email);
+      await EmailService(Supabase.instance.client).resendRegistrationOtp(widget.email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('A new verification code has been sent.')),
@@ -119,47 +121,41 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        contentPadding: const EdgeInsets.all(28),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(32),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle, color: AppColors.success, size: 48),
+              child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 52),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text(
               'Account created!',
-              style: Theme.of(dialogContext).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryNavy,
-                  ),
+              style: AppTypography.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
               'Welcome to TrustVault, ${widget.fullName.split(' ').first}. '
               'We sent a welcome email and a reminder to complete identity verification.',
-              style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textGrey,
-                  ),
+              style: AppTypography.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryNavy),
+              child: FilledButton(
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
-                  context.go('/onboarding');
+                  context.go('/app/kyc');
                 },
-                child: const Text('Start Onboarding Tour'),
+                child: const Text('Complete KYC Now'),
               ),
             ),
             const SizedBox(height: 8),
@@ -168,9 +164,9 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
               child: OutlinedButton(
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
-                  context.go('/app/kyc');
+                  context.go('/app');
                 },
-                child: const Text('Complete KYC Now'),
+                child: const Text('Go to dashboard'),
               ),
             ),
           ],
@@ -181,116 +177,74 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(child: Image.asset('assets/images/logo.png', height: 64)),
-                const SizedBox(height: 16),
-                Text(
-                  'Verify your email',
-                  style: theme.textTheme.displayMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'We sent a 6-digit code to\n${widget.email}',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          controller: _otpController,
-                          decoration: const InputDecoration(
-                            labelText: 'Verification code',
-                            hintText: '000000',
-                            prefixIcon: Icon(Icons.pin_outlined),
-                          ),
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            letterSpacing: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(6),
-                          ],
-                          onEditingComplete: _verify,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Demo Mode: Click "Get Code" or use 123456',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.textGrey,
-                            fontSize: 11,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        if (_errorMessage != null) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            _errorMessage!,
-                            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.error),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _verify,
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.white,
-                                  ),
-                                )
-                              : const Text('Verify & create account'),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            TextButton(
-                              onPressed: _isResending ? null : _resend,
-                              child: _isResending
-                                  ? const Text('Sending…')
-                                  : const Text('Resend code'),
-                            ),
-                            TextButton.icon(
-                              icon: const Icon(Icons.key_outlined, size: 16),
-                              label: const Text('Get Code (Demo Mode)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                              onPressed: _fetchDemoCode,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => context.go('/signup'),
-                  child: const Text('Back to sign up'),
-                ),
-              ],
+    return AuthPageScaffold(
+      title: 'Verify your email',
+      subtitle: 'We sent a 6-digit code to ${widget.email}',
+      heroTagline: 'One step away\nfrom your account.',
+      footer: TextButton(
+        onPressed: () => context.go('/signup'),
+        child: const Text('Back to sign up'),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _otpController,
+            decoration: const InputDecoration(
+              labelText: 'Verification code',
+              hintText: '000000',
+              prefixIcon: Icon(Icons.pin_outlined),
             ),
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 28,
+              letterSpacing: 12,
+              fontWeight: FontWeight.w700,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6),
+            ],
+            onEditingComplete: _verify,
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            'Demo Mode: Click "Get Code" or use 123456',
+            style: AppTypography.textTheme.bodySmall?.copyWith(fontSize: 11),
+            textAlign: TextAlign.center,
+          ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 16),
+            ErrorBanner(message: _errorMessage!),
+          ],
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: _isLoading ? null : _verify,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                  )
+                : const Text('Verify & create account'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: _isResending ? null : _resend,
+                child: Text(_isResending ? 'Sending…' : 'Resend code'),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.key_outlined, size: 16),
+                label: const Text('Get Code (Demo)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                onPressed: _fetchDemoCode,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

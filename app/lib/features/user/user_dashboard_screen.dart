@@ -4,6 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_decorations.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
+import '../../core/widgets/responsive_layout.dart';
 import '../../core/wallet_eligibility.dart';
 import '../../models/profile.dart';
 import '../../models/wallet_account.dart';
@@ -90,128 +94,114 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final profile = widget.profile;
     final eligibility = WalletEligibility(profile: profile);
     final balance = widget.account?.balance ?? 0;
+    final greeting = _greetingForTime();
 
     return RefreshIndicator(
       onRefresh: () async {
         await widget.onRefresh();
         await _loadRecent();
       },
+      color: AppColors.secondaryBlue,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(24),
+        padding: context.pagePadding,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Text(
+                  '$greeting, ${profile.fullName.split(' ').first}',
+                  style: AppTypography.textTheme.headlineMedium?.copyWith(
+                    fontSize: context.isMobile ? 22 : null,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Here\'s an overview of your vault today.',
+                  style: AppTypography.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
+                ),
+                const SizedBox(height: 24),
                 if (profile.kycStatus == KycStatus.notSubmitted ||
                     profile.kycStatus == KycStatus.declined)
                   _OnboardingBanner(profile: profile),
                 if (profile.kycStatus == KycStatus.pending) ...[
-                  Card(
-                    color: AppColors.secondaryBlue.withValues(alpha: 0.06),
-                    child: ListTile(
-                      leading: const Icon(Icons.hourglass_top, color: AppColors.secondaryBlue),
-                      title: const Text('Verification in progress'),
-                      subtitle: const Text('We will notify you when review is complete.'),
-                      trailing: TextButton(
-                        onPressed: () => context.go('/app/kyc/pending'),
-                        child: const Text('View status'),
-                      ),
-                    ),
+                  _InfoStrip(
+                    icon: Icons.hourglass_top_rounded,
+                    title: 'Verification in progress',
+                    subtitle: 'We\'ll notify you when review is complete.',
+                    actionLabel: 'View status',
+                    onAction: () => context.go('/app/kyc/pending'),
                   ),
                   const SizedBox(height: 16),
                 ],
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Wallet balance',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppColors.textGrey,
-                              ),
-                            ),
-                            const Spacer(),
-                            _StatusBadge(label: profile.accountStatus.label),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(formatNaira(balance), style: theme.textTheme.displayLarge),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.account == null
-                              ? 'Account unavailable'
-                              : 'Account ${widget.account!.accountNumber} · Available ${formatNaira(widget.availableBalance)}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
+                BalanceHeroCard(
+                  balanceLabel: 'Total balance',
+                  balance: formatNaira(balance),
+                  subtitle: widget.account == null
+                      ? 'Account unavailable'
+                      : 'Acct ${widget.account!.accountNumber} · Available ${formatNaira(widget.availableBalance)}',
+                  trailing: StatusPill(label: profile.accountStatus.label),
                 ),
                 const SizedBox(height: 16),
                 _AccountLevelCard(profile: profile),
-                const SizedBox(height: 24),
-                Text('Quick actions', style: theme.textTheme.titleLarge),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                const SizedBox(height: 28),
+                SectionHeader(title: 'Quick actions'),
+                const SizedBox(height: 14),
+                QuickActionGrid(
                   children: [
-                    _ActionButton(
-                      label: 'Request funding',
+                    QuickActionTile(
+                      label: 'Fund',
                       icon: Icons.add_card_outlined,
                       enabled: eligibility.canRequestFunding,
                       lockReason: eligibility.fundingLockReason,
-                      onPressed: () => context.go('/app/funding'),
+                      onTap: () => context.go('/app/funding'),
                     ),
-                    _ActionButton(
+                    QuickActionTile(
                       label: 'Transfer',
-                      icon: Icons.swap_horiz,
+                      icon: Icons.swap_horiz_rounded,
                       enabled: eligibility.canTransfer,
                       lockReason: eligibility.transferLockReason,
-                      onPressed: () => context.go('/app/transfer'),
+                      onTap: () => context.go('/app/transfer'),
                     ),
-                    _ActionButton(
+                    QuickActionTile(
                       label: 'Withdraw',
                       icon: Icons.account_balance_wallet_outlined,
                       enabled: eligibility.canWithdraw,
                       lockReason: eligibility.withdrawLockReason,
-                      onPressed: () => context.go('/app/withdraw'),
+                      onTap: () => context.go('/app/withdraw'),
+                    ),
+                    QuickActionTile(
+                      label: 'Verify',
+                      icon: Icons.verified_user_outlined,
+                      enabled: true,
+                      onTap: () => context.go('/app/kyc'),
                     ),
                   ],
                 ),
                 const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Text('Recent activity', style: theme.textTheme.titleLarge),
-                    const Spacer(),
-                    if (_recent.isNotEmpty)
-                      TextButton(
-                        onPressed: () => context.go('/app/history'),
-                        child: const Text('View all'),
-                      ),
-                  ],
+                SectionHeader(
+                  title: 'Recent activity',
+                  actionLabel: _recent.isNotEmpty ? 'View all' : null,
+                  onAction: _recent.isNotEmpty ? () => context.go('/app/history') : null,
                 ),
                 const SizedBox(height: 12),
-                Card(
+                PremiumCard(
+                  padding: EdgeInsets.zero,
                   child: _loadingRecent
-                      ? const TransactionListSkeleton()
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: TransactionListSkeleton(),
+                        )
                       : _recent.isEmpty
                           ? EmptyState(
                               icon: Icons.receipt_long_outlined,
                               title: 'No transactions yet',
-                              message:
-                                  'Your activity will appear here once you start using your wallet.',
+                              message: 'Your activity will appear here once you start using your wallet.',
                             )
                           : Column(
                               children: _recent
@@ -229,6 +219,13 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       ),
     );
   }
+
+  String _greetingForTime() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
 }
 
 class _OnboardingBanner extends StatelessWidget {
@@ -240,33 +237,36 @@ class _OnboardingBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
-        color: AppColors.primaryNavy,
+      child: Container(
+        decoration: AppDecorations.heroCard(),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                profile.kycStatus == KycStatus.declined
-                    ? 'Verification required'
-                    : 'Complete verification',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.white),
+              Row(
+                children: [
+                  Icon(Icons.verified_user_outlined, color: AppColors.accentGoldLight, size: 22),
+                  const SizedBox(width: 10),
+                  Text(
+                    profile.kycStatus == KycStatus.declined
+                        ? 'Verification required'
+                        : 'Complete verification',
+                    style: AppTypography.textTheme.titleMedium?.copyWith(color: AppColors.white),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Text(
                 profile.kycStatus == KycStatus.declined
                     ? 'Your previous submission was declined. Please resubmit your details.'
                     : 'Verify your identity to unlock funding and wallet features.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.85),
-                    ),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentGold,
+                style: AppTypography.textTheme.bodySmall?.copyWith(
+                  color: AppColors.white.withValues(alpha: 0.8),
                 ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
                 onPressed: () => context.go('/app/kyc'),
                 child: Text(profile.kycStatus == KycStatus.declined ? 'Resubmit KYC' : 'Start verification'),
               ),
@@ -278,58 +278,84 @@ class _OnboardingBanner extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryBlue.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.secondaryBlue,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.label,
+class _InfoStrip extends StatelessWidget {
+  const _InfoStrip({
     required this.icon,
-    required this.enabled,
-    required this.lockReason,
-    required this.onPressed,
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onAction,
   });
 
-  final String label;
   final IconData icon;
-  final bool enabled;
-  final String lockReason;
-  final VoidCallback onPressed;
+  final String title;
+  final String subtitle;
+  final String actionLabel;
+  final VoidCallback onAction;
 
   @override
   Widget build(BuildContext context) {
-    if (!enabled) {
-      return Tooltip(
-        message: lockReason,
-        child: OutlinedButton.icon(onPressed: null, icon: Icon(icon), label: Text(label)),
-      );
-    }
+    final compact = context.isMobile;
 
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
+    return PremiumCard(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 16, vertical: 14),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icon, color: AppColors.secondaryBlue, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: AppTypography.textTheme.titleMedium?.copyWith(fontSize: 15)),
+                          Text(subtitle, style: AppTypography.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(onPressed: onAction, child: Text(actionLabel)),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppColors.secondaryBlue, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: AppTypography.textTheme.titleMedium?.copyWith(fontSize: 15)),
+                      Text(subtitle, style: AppTypography.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+                TextButton(onPressed: onAction, child: Text(actionLabel)),
+              ],
+            ),
     );
   }
 }
@@ -341,64 +367,60 @@ class _AccountLevelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final level = profile.kycLevel;
 
-    return Card(
-      color: AppColors.primaryNavy,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.shield_outlined, color: AppColors.accentGold, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      profile.levelBadgeTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(color: AppColors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+    return PremiumCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: AppDecorations.goldShimmer,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                TextButton(
-                  onPressed: () => context.go('/app/kyc'),
-                  child: Text(
-                    level >= 3 ? 'Max Level Reached' : 'Upgrade Level',
-                    style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Daily Transfer Limit',
-                  style: theme.textTheme.bodySmall?.copyWith(color: AppColors.white.withValues(alpha: 0.8)),
-                ),
-                Text(
-                  profile.formattedDailyLimit,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.white, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (level / 3.0).clamp(0.1, 1.0),
-                backgroundColor: AppColors.white.withValues(alpha: 0.15),
-                color: AppColors.accentGold,
-                minHeight: 6,
+                child: const Icon(Icons.shield_outlined, color: AppColors.primaryNavy, size: 18),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  profile.levelBadgeTitle,
+                  style: AppTypography.textTheme.titleMedium,
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.go('/app/kyc'),
+                child: Text(
+                  level >= 3 ? 'Max level' : 'Upgrade',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Daily transfer limit', style: AppTypography.textTheme.bodySmall),
+              Text(
+                profile.formattedDailyLimit,
+                style: AppTypography.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: (level / 3.0).clamp(0.08, 1.0),
+              backgroundColor: AppColors.borderGrey,
+              color: AppColors.accentGold,
+              minHeight: 8,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

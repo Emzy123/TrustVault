@@ -3,66 +3,63 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Typography ramp — Inter, 14–16px base (Blueprint §9.2)
+/// Typography — Plus Jakarta Sans for a refined fintech feel.
 abstract final class AppTypography {
+  static TextStyle _display({required double size, required FontWeight weight}) =>
+      GoogleFonts.plusJakartaSans(
+        fontSize: size,
+        fontWeight: weight,
+        color: AppColors.textDark,
+        height: 1.15,
+        letterSpacing: -0.5,
+      );
+
+  static TextStyle _body({required double size, required FontWeight weight, Color? color}) =>
+      GoogleFonts.inter(
+        fontSize: size,
+        fontWeight: weight,
+        color: color ?? AppColors.textDark,
+        height: 1.5,
+      );
+
   static TextTheme textTheme = TextTheme(
-    displayLarge: GoogleFonts.inter(
-      fontSize: 32,
-      fontWeight: FontWeight.w700,
-      color: AppColors.primaryNavy,
-      height: 1.2,
-    ),
-    displayMedium: GoogleFonts.inter(
-      fontSize: 28,
-      fontWeight: FontWeight.w700,
-      color: AppColors.primaryNavy,
-      height: 1.25,
-    ),
-    headlineLarge: GoogleFonts.inter(
-      fontSize: 24,
-      fontWeight: FontWeight.w600,
-      color: AppColors.primaryNavy,
-      height: 1.3,
-    ),
-    headlineMedium: GoogleFonts.inter(
-      fontSize: 20,
-      fontWeight: FontWeight.w600,
-      color: AppColors.primaryNavy,
-      height: 1.35,
-    ),
-    titleLarge: GoogleFonts.inter(
+    displayLarge: _display(size: 40, weight: FontWeight.w700),
+    displayMedium: _display(size: 32, weight: FontWeight.w700),
+    headlineLarge: _display(size: 28, weight: FontWeight.w700),
+    headlineMedium: _display(size: 22, weight: FontWeight.w600),
+    titleLarge: GoogleFonts.plusJakartaSans(
       fontSize: 18,
       fontWeight: FontWeight.w600,
-      color: AppColors.primaryNavy,
+      color: AppColors.textDark,
     ),
-    titleMedium: GoogleFonts.inter(
+    titleMedium: GoogleFonts.plusJakartaSans(
       fontSize: 16,
       fontWeight: FontWeight.w600,
-      color: AppColors.primaryNavy,
+      color: AppColors.textDark,
     ),
-    bodyLarge: GoogleFonts.inter(
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-      color: AppColors.primaryNavy,
-      height: 1.5,
-    ),
-    bodyMedium: GoogleFonts.inter(
-      fontSize: 14,
-      fontWeight: FontWeight.w400,
-      color: AppColors.primaryNavy,
-      height: 1.5,
-    ),
-    bodySmall: GoogleFonts.inter(
-      fontSize: 12,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textGrey,
-      height: 1.4,
-    ),
-    labelLarge: GoogleFonts.inter(
-      fontSize: 14,
+    bodyLarge: _body(size: 16, weight: FontWeight.w400),
+    bodyMedium: _body(size: 14, weight: FontWeight.w400),
+    bodySmall: _body(size: 12, weight: FontWeight.w400, color: AppColors.textGrey),
+    labelLarge: GoogleFonts.plusJakartaSans(
+      fontSize: 15,
       fontWeight: FontWeight.w600,
       color: AppColors.white,
       letterSpacing: 0.2,
     ),
   );
+
+  static TextStyle get balance => GoogleFonts.plusJakartaSans(
+        fontSize: 42,
+        fontWeight: FontWeight.w700,
+        color: AppColors.white,
+        letterSpacing: -1.2,
+        height: 1.0,
+      );
+
+  static TextStyle get overline => GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.2,
+        color: AppColors.textMuted,
+      );
 }

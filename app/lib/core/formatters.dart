@@ -44,7 +44,9 @@ String formatErrorMessage(Object error) {
   if (rawMessage.contains('Database error querying schema') ||
       rawMessage.contains('Database error finding user') ||
       rawMessage.contains('unexpected_failure')) {
-    return 'Database schema error: The database has not been initialized. Please run "supabase/setup_and_seed_all.sql" in your Supabase SQL Editor or use local Supabase.';
+    return 'This account cannot sign in (missing auth identity records). '
+        'Run supabase/patch_fix_create_user_auth.sql in the Supabase SQL Editor, '
+        'then try again. Default password for super-admin-created users is TrustVault123! unless you set another.';
   }
 
   if (rawMessage.contains('Could not find the function') ||

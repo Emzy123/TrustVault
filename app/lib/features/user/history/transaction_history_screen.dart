@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/formatters.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_decorations.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/premium_widgets.dart';
 import '../../../models/wallet_models.dart';
 import '../../shared/state_widgets.dart';
 
@@ -24,23 +27,27 @@ class TransactionHistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: onRefresh,
+      color: AppColors.secondaryBlue,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('History', style: Theme.of(context).textTheme.headlineLarge),
-                const SizedBox(height: 16),
+                const FormPageHeader(
+                  title: 'History',
+                  subtitle: 'All transfers, funding, and withdrawals',
+                ),
+                const SizedBox(height: 20),
                 if (loading && transactions.isEmpty)
-                  const Card(child: TransactionListSkeleton())
+                  PremiumCard(child: const TransactionListSkeleton())
                 else if (error != null)
                   ErrorBanner(message: error!)
                 else if (transactions.isEmpty)
-                  Card(
+                  PremiumCard(
                     child: EmptyState(
                       icon: Icons.receipt_long_outlined,
                       title: 'No transactions yet',
@@ -48,14 +55,23 @@ class TransactionHistoryScreen extends StatelessWidget {
                     ),
                   )
                 else
-                  Card(
+                  PremiumCard(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Column(
-                      children: transactions
-                          .map((tx) => TransactionTile(
-                                transaction: tx,
-                                onTap: () => context.go('/app/history/${tx.id}'),
-                              ))
-                          .toList(),
+                      children: [
+                        for (var i = 0; i < transactions.length; i++) ...[
+                          TransactionTile(
+                            transaction: transactions[i],
+                            onTap: () => context.go('/app/history/${transactions[i].id}'),
+                          ),
+                          if (i < transactions.length - 1)
+                            Divider(
+                              height: 1,
+                              indent: 72,
+                              color: AppColors.borderGrey.withValues(alpha: 0.6),
+                            ),
+                        ],
+                      ],
                     ),
                   ),
               ],
@@ -81,10 +97,8 @@ class TransactionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     if (loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: AppColors.secondaryBlue));
     }
 
     if (error != null) {
@@ -96,58 +110,93 @@ class TransactionDetailScreen extends StatelessWidget {
       return const Center(child: Text('Transaction not found'));
     }
 
+    final prefix = tx.isIncoming ? '+' : '-';
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Text(tx.type.label, style: theme.textTheme.headlineMedium),
-                      const Spacer(),
-                      StatusChip(status: tx.status),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  _DetailRow(
-                    label: 'Amount',
-                    value: '${tx.isIncoming ? '+' : '-'}${formatNaira(tx.amount)}',
-                  ),
-                  _DetailRow(label: 'Date', value: formatDate(tx.createdAt)),
-                  if (tx.note != null && tx.note!.isNotEmpty)
-                    _DetailRow(label: 'Note', value: tx.note!),
-                  if (tx.declineReason != null && tx.declineReason!.isNotEmpty)
-                    _DetailRow(label: 'Reason', value: tx.declineReason!),
-                  if (tx.status == TransactionStatus.pending &&
-                      tx.type == TransactionType.withdrawal) ...[
-                    const SizedBox(height: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FormPageHeader(
+                title: tx.type.label,
+                trailing: StatusChip(status: tx.status),
+              ),
+              const SizedBox(height: 20),
+              PremiumCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: AppColors.secondaryBlue.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: AppDecorations.navyGradient,
+                        borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
                       ),
-                      child: Text(
-                        'This withdrawal is under review. You will see the real outcome here when resolved.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryBlue,
-                        ),
+                      child: Column(
+                        children: [
+                          Icon(_iconForType(tx.type), color: AppColors.white.withValues(alpha: 0.8), size: 28),
+                          const SizedBox(height: 12),
+                          Text(
+                            '$prefix${formatNaira(tx.amount)}',
+                            style: AppTypography.balance.copyWith(
+                              color: tx.isIncoming ? AppColors.accentGoldLight : AppColors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            tx.isIncoming ? 'Received' : 'Sent',
+                            style: AppTypography.textTheme.bodySmall?.copyWith(
+                              color: AppColors.white.withValues(alpha: 0.65),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    DetailRow(label: 'Date', value: formatDate(tx.createdAt)),
+                    DetailRow(label: 'Status', value: tx.status.label),
+                    if (tx.note != null && tx.note!.isNotEmpty) DetailRow(label: 'Note', value: tx.note!),
+                    if (tx.declineReason != null && tx.declineReason!.isNotEmpty)
+                      DetailRow(label: 'Reason', value: tx.declineReason!),
+                    if (tx.status == TransactionStatus.pending && tx.type == TransactionType.withdrawal) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryBlue.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.secondaryBlue.withValues(alpha: 0.15)),
+                        ),
+                        child: Text(
+                          'This withdrawal is under review. You will see the real outcome here when resolved.',
+                          style: AppTypography.textTheme.bodySmall?.copyWith(color: AppColors.secondaryBlue),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  IconData _iconForType(TransactionType type) {
+    switch (type) {
+      case TransactionType.transfer:
+        return Icons.swap_horiz_rounded;
+      case TransactionType.deposit:
+        return Icons.south_west_rounded;
+      case TransactionType.withdrawal:
+        return Icons.north_east_rounded;
+      case TransactionType.funding:
+        return Icons.add_card_rounded;
+    }
   }
 }
 
@@ -163,44 +212,83 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final tx = transaction;
     final prefix = tx.isIncoming ? '+' : '-';
 
-    return ListTile(
-      onTap: onTap,
-      leading: CircleAvatar(
-        backgroundColor: AppColors.neutralLightGrey,
-        child: Icon(_iconForType(tx.type), color: AppColors.secondaryBlue, size: 20),
-      ),
-      title: Text('${tx.type.label}${tx.isIncoming ? ' received' : ''}'),
-      subtitle: Text(formatDate(tx.createdAt), style: theme.textTheme.bodySmall),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            '$prefix${formatNaira(tx.amount)}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: tx.isIncoming ? AppColors.success : AppColors.primaryNavy,
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _iconColor(tx.type).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(_iconForType(tx.type), color: _iconColor(tx.type), size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${tx.type.label}${tx.isIncoming ? ' received' : ''}',
+                      style: AppTypography.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(formatDate(tx.createdAt), style: AppTypography.textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$prefix${formatNaira(tx.amount)}',
+                    style: AppTypography.textTheme.titleSmall?.copyWith(
+                      color: tx.isIncoming ? AppColors.success : AppColors.textDark,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  StatusChip(status: tx.status, compact: true),
+                ],
+              ),
+            ],
           ),
-          StatusChip(status: tx.status, compact: true),
-        ],
+        ),
       ),
     );
+  }
+
+  Color _iconColor(TransactionType type) {
+    switch (type) {
+      case TransactionType.transfer:
+        return AppColors.secondaryBlue;
+      case TransactionType.deposit:
+      case TransactionType.funding:
+        return AppColors.success;
+      case TransactionType.withdrawal:
+        return AppColors.accentGold;
+    }
   }
 
   IconData _iconForType(TransactionType type) {
     switch (type) {
       case TransactionType.transfer:
-        return Icons.swap_horiz;
+        return Icons.swap_horiz_rounded;
       case TransactionType.deposit:
-        return Icons.south_west;
+        return Icons.south_west_rounded;
       case TransactionType.withdrawal:
-        return Icons.north_east;
+        return Icons.north_east_rounded;
       case TransactionType.funding:
-        return Icons.add_card;
+        return Icons.add_card_rounded;
     }
   }
 }
@@ -232,37 +320,17 @@ class StatusChip extends StatelessWidget {
         vertical: compact ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.12),
+        color: _color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _color.withValues(alpha: 0.25)),
       ),
       child: Text(
         status.label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: _color,
-              fontWeight: FontWeight.w600,
-              fontSize: compact ? 10 : null,
-            ),
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(width: 100, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
-          Expanded(child: Text(value, style: Theme.of(context).textTheme.bodyMedium)),
-        ],
+        style: AppTypography.textTheme.bodySmall?.copyWith(
+          color: _color,
+          fontWeight: FontWeight.w600,
+          fontSize: compact ? 10 : null,
+        ),
       ),
     );
   }

@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/premium_widgets.dart';
 import '../../services/email_service.dart';
+import '../shared/state_widgets.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -64,146 +66,75 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    height: 64,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Create account',
-                  style: theme.textTheme.displayMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Start with a zero-balance wallet',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textGrey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'We\'ll email you a 6-digit code to verify your address.',
-                  style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TextFormField(
-                            controller: _fullNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Full name',
-                            ),
-                            textCapitalization: TextCapitalization.words,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Full name is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _phoneController,
-                            decoration: const InputDecoration(
-                              labelText: 'Phone number',
-                            ),
-                            keyboardType: TextInputType.phone,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Phone number is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Email is required';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _passwordController,
-                            decoration: const InputDecoration(
-                              labelText: 'Password',
-                            ),
-                            obscureText: true,
-                            validator: (value) {
-                              if (value == null || value.length < 8) {
-                                return 'Password must be at least 8 characters';
-                              }
-                              return null;
-                            },
-                          ),
-                          if (_errorMessage != null) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: _isLoading ? null : _submit,
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.white,
-                                    ),
-                                  )
-                                : const Text('Send verification code'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.go('/'),
-                  child: const Text('Already have an account? Sign in'),
-                ),
-              ],
+    return AuthPageScaffold(
+      title: 'Create your account',
+      subtitle: 'Start with a zero-balance wallet. We\'ll email a 6-digit code to verify your address.',
+      heroTagline: 'Your wealth.\nProtected & connected.',
+      footer: TextButton(
+        onPressed: () => context.go('/'),
+        child: const Text('Already have an account? Sign in'),
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextFormField(
+              controller: _fullNameController,
+              decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
+              textCapitalization: TextCapitalization.words,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return 'Full name is required';
+                return null;
+              },
             ),
-          ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _phoneController,
+              decoration: const InputDecoration(labelText: 'Phone number', prefixIcon: Icon(Icons.phone_outlined)),
+              keyboardType: TextInputType.phone,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return 'Phone number is required';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return 'Email is required';
+                if (!value.contains('@')) return 'Enter a valid email';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline)),
+              obscureText: true,
+              validator: (value) {
+                if (value == null || value.length < 8) return 'Password must be at least 8 characters';
+                return null;
+              },
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              ErrorBanner(message: _errorMessage!),
+            ],
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _submit,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                    )
+                  : const Text('Send verification code'),
+            ),
+          ],
         ),
       ),
     );

@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/formatters.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/premium_widgets.dart';
 import '../../../core/wallet_eligibility.dart';
 import '../../../models/profile.dart';
 import '../../../models/wallet_account.dart';
@@ -66,18 +68,19 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final eligibility = WalletEligibility(profile: widget.profile);
 
     if (!eligibility.canWithdraw) {
       return Center(
-        child: EmptyState(
-          icon: Icons.lock_outline,
-          title: 'Withdrawals unavailable',
-          message: eligibility.withdrawLockReason,
-          action: ElevatedButton(
-            onPressed: () => context.go('/app'),
-            child: const Text('Back to dashboard'),
+        child: PremiumCard(
+          child: EmptyState(
+            icon: Icons.lock_outline,
+            title: 'Withdrawals unavailable',
+            message: eligibility.withdrawLockReason,
+            action: FilledButton(
+              onPressed: () => context.go('/app'),
+              child: const Text('Back to dashboard'),
+            ),
           ),
         ),
       );
@@ -91,73 +94,89 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Withdraw', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: 8),
-              Text(
-                'Available: ${formatNaira(widget.availableBalance)} · Daily limit \$2,000,000',
-                style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
+              FormPageHeader(
+                title: 'Withdraw',
+                subtitle:
+                    'Available: ${formatNaira(widget.availableBalance)} · Daily limit \$2,000,000',
               ),
               const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Withdrawals enter a genuine pending review state. A Super Admin will approve or decline with a real reason.',
-                          style: theme.textTheme.bodySmall,
+              PremiumCard(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryBlue.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.secondaryBlue.withValues(alpha: 0.15)),
                         ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 18, color: AppColors.secondaryBlue.withValues(alpha: 0.8)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Withdrawals enter a genuine pending review state. A Super Admin will approve or decline with a real reason.',
+                                style: AppTypography.textTheme.bodySmall?.copyWith(
+                                  color: AppColors.secondaryBlue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _amountController,
+                        decoration: const InputDecoration(
+                          labelText: 'Amount (USD)',
+                          prefixText: '\$ ',
+                          prefixIcon: Icon(Icons.attach_money_rounded),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        validator: (v) {
+                          final amount = double.tryParse(v?.trim() ?? '');
+                          if (amount == null || amount <= 0) return 'Enter a valid amount';
+                          if (amount > widget.availableBalance) return 'Insufficient available balance';
+                          if (amount > 2000000) return 'Maximum withdrawal is \$2,000,000';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _noteController,
+                        decoration: const InputDecoration(
+                          labelText: 'Note (optional)',
+                          prefixIcon: Icon(Icons.notes_outlined),
+                        ),
+                        maxLines: 2,
+                      ),
+                      if (_error != null) ...[
                         const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _amountController,
-                          decoration: const InputDecoration(
-                            labelText: 'Amount (USD)',
-                            prefixText: '\$ ',
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) {
-                            final amount = double.tryParse(v?.trim() ?? '');
-                            if (amount == null || amount <= 0) return 'Enter a valid amount';
-                            if (amount > widget.availableBalance) {
-                              return 'Insufficient available balance';
-                            }
-                            if (amount > 2000000) return 'Maximum withdrawal is \$2,000,000';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _noteController,
-                          decoration: const InputDecoration(labelText: 'Note (optional)'),
-                          maxLines: 2,
-                        ),
-                        if (_error != null) ...[
-                          const SizedBox(height: 16),
-                          ErrorBanner(message: _error!),
-                        ],
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: _loading ? null : _submit,
-                          child: _loading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
-                                )
-                              : const Text('Submit for review'),
-                        ),
+                        ErrorBanner(message: _error!),
                       ],
-                    ),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: _loading ? null : _submit,
+                        child: _loading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                              )
+                            : const Text('Submit for review'),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -181,46 +200,37 @@ class WithdrawPendingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: PremiumCard(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.secondaryBlue.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
+                    color: AppColors.secondaryBlue.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    TransactionStatus.pending.label,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.secondaryBlue,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: const Icon(Icons.hourglass_top_rounded, size: 48, color: AppColors.secondaryBlue),
                 ),
+                const SizedBox(height: 20),
+                StatusPill(label: TransactionStatus.pending.label, color: AppColors.secondaryBlue),
                 const SizedBox(height: 16),
-                Text('Withdrawal in review', style: theme.textTheme.headlineMedium),
+                Text('Withdrawal in review', style: AppTypography.textTheme.headlineSmall),
                 const SizedBox(height: 8),
-                Text(
-                  formatNaira(amount),
-                  style: theme.textTheme.displayMedium,
-                ),
+                Text(formatNaira(amount), style: AppTypography.balance.copyWith(color: AppColors.textDark)),
                 const SizedBox(height: 12),
                 Text(
                   'Your request is being reviewed. This is a real pending state — you will see the actual outcome in your history once a Super Admin resolves it.',
-                  style: theme.textTheme.bodySmall,
+                  style: AppTypography.textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
-                ElevatedButton(
+                const SizedBox(height: 28),
+                FilledButton(
                   onPressed: () => context.go('/app/history/$transactionId'),
                   child: const Text('View in history'),
                 ),

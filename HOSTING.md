@@ -61,7 +61,7 @@ npx supabase functions deploy send-email --no-verify-jwt
 **Authentication → URL configuration**
 
 - **Site URL:** your public app URL (same as `APP_URL` in `.env`)
-- **Redirect URLs:** add `APP_URL` and `APP_URL/**`
+- **Redirect URLs:** add `APP_URL`, `APP_URL/**`, and `APP_URL/reset-password`
 
 **Authentication → Providers → Email:** enable email signup.
 
@@ -148,7 +148,13 @@ Password: **`Password123!`**
 
 | Issue | Fix |
 |--------|-----|
-| App hits wrong API | Rebuild with correct `--dart-define=SUPABASE_URL=...` |
+| App hits wrong API | Rebuild with correct `--dart-define=SUPABASE_URL=...` (never use local `127.0.0.1:54321` for production) |
+| Login 500 / database error | Run `supabase/patch_fix_hosted_auth.sql` in Supabase SQL Editor (fixes demo users + registration RPC) |
+| KYC fails / missing function | Run `supabase/patch_kyc_level_rpcs.sql` in Supabase SQL Editor |
+| Transfer / withdrawal fails | Run `supabase/patch_transfer_and_wallet_rpcs.sql` in Supabase SQL Editor |
+| Balance cannot be modified directly | Run `supabase/patch_fix_post_ledger_balance.sql` in Supabase SQL Editor |
+| Super-admin created user cannot login | Run `supabase/patch_fix_create_user_auth.sql` in Supabase SQL Editor |
 | OTP never arrives | Brevo secrets + `send-email` deployed; check `email_outbox` in SQL |
 | Auth redirect error | Add app URL to Supabase Auth redirect allow list |
 | 404 on refresh | SPA rewrite to `index.html` (Netlify/Vercel config above) |
+| Blank page on some PCs | Hard refresh (`Ctrl+Shift+R`), clear site data, use Chrome/Edge; rebuild with `./scripts/build-web.sh` (local CanvasKit, no service worker, loading/error UI) |

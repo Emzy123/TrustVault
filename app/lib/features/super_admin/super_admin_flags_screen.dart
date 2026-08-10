@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
 import '../../models/admin_models.dart';
 import '../../services/admin_service.dart';
 import '../../services/wallet_service.dart';
@@ -152,51 +154,27 @@ class _SuperAdminFlagsScreenState extends State<SuperAdminFlagsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          padding: const EdgeInsets.fromLTRB(28, 28, 28, 16),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text('Flags Resolution Queue', style: theme.textTheme.headlineLarge),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Review transaction flags raised by Admins and take compliance resolution actions',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-                ),
-              ],
+            child: AdminPageHeader(
+              title: 'Flags Resolution Queue',
+              subtitle: 'Review transaction flags raised by Admins and take compliance resolution actions',
+              onRefresh: _load,
             ),
           ),
         ),
         if (_loading && _flags.isEmpty)
-          const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          )
+          const SliverFillRemaining(child: Center(child: CircularProgressIndicator(color: AppColors.secondaryBlue)))
         else if (_error != null && _flags.isEmpty)
+          SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 28), child: ErrorBanner(message: _error!)))
+        else if (_flags.isEmpty)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ErrorBanner(message: _error!),
-            ),
-          )
-        else if (_flags.isEmpty)
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Card(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: PremiumCard(
                 child: EmptyState(
                   icon: Icons.outlined_flag,
                   title: 'No flags raised',
@@ -207,119 +185,66 @@ class _SuperAdminFlagsScreenState extends State<SuperAdminFlagsScreen> {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
             sliver: SliverList.separated(
               itemCount: _flags.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final flag = _flags[index];
                 final isOpen = flag.status == 'open';
 
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: isOpen
-                              ? AppColors.error.withValues(alpha: 0.15)
-                              : AppColors.neutralLightGrey,
-                          child: Icon(
-                            Icons.flag,
-                            color: isOpen ? AppColors.error : AppColors.textGrey,
-                          ),
+                return PremiumCard(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: (isOpen ? AppColors.error : AppColors.textMuted).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
+                        child: Icon(Icons.flag_rounded, color: isOpen ? AppColors.error : AppColors.textMuted),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(child: Text('Reason: ${flag.reason}', style: AppTypography.textTheme.titleMedium)),
+                                StatusPill(label: flag.status.toUpperCase(), color: isOpen ? AppColors.error : AppColors.success),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            if (flag.userEmail != null) Text('User: ${flag.userEmail}', style: AppTypography.textTheme.bodySmall),
+                            if (flag.transactionAmount != null)
+                              Text('Tx: ${flag.transactionType?.toUpperCase()} · ${formatNaira(flag.transactionAmount!)}', style: AppTypography.textTheme.bodySmall),
+                            Text('Raised at: ${formatDate(flag.createdAt)}', style: AppTypography.textTheme.bodySmall),
+                            if (flag.resolutionNote != null) Text('Note: ${flag.resolutionNote}', style: AppTypography.textTheme.bodySmall),
+                          ],
+                        ),
+                      ),
+                      if (isOpen) ...[
                         const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text('Reason: ${flag.reason}', style: theme.textTheme.titleMedium),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _FlagBadge(status: flag.status),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              if (flag.userEmail != null)
-                                Text('User: ${flag.userEmail}', style: theme.textTheme.bodySmall),
-                              if (flag.transactionAmount != null)
-                                Text(
-                                  'Tx: ${flag.transactionType?.toUpperCase()} · ${formatNaira(flag.transactionAmount!)}',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              Text('Raised at: ${formatDate(flag.createdAt)}', style: theme.textTheme.bodySmall),
-                              if (flag.resolutionNote != null)
-                                Text('Note: ${flag.resolutionNote}', style: theme.textTheme.bodySmall),
-                            ],
-                          ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            OutlinedButton(onPressed: () => _resolve(flag, true), child: const Text('Dismiss')),
+                            FilledButton(onPressed: () => _resolve(flag, false), child: const Text('Resolve Flag')),
+                          ],
                         ),
-                        if (isOpen) ...[
-                          const SizedBox(width: 16),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              OutlinedButton(
-                                onPressed: () => _resolve(flag, true),
-                                child: const Text('Dismiss'),
-                              ),
-                              FilledButton(
-                                onPressed: () => _resolve(flag, false),
-                                child: const Text('Resolve Flag'),
-                              ),
-                            ],
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
                   ),
                 );
               },
             ),
           ),
       ],
-    );
-  }
-}
-
-class _FlagBadge extends StatelessWidget {
-  const _FlagBadge({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    switch (status) {
-      case 'open':
-        color = AppColors.error;
-        break;
-      case 'resolved':
-        color = AppColors.success;
-        break;
-      default:
-        color = AppColors.textGrey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-            ),
-      ),
     );
   }
 }

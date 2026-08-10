@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/premium_widgets.dart';
+import '../../core/widgets/responsive_layout.dart';
 import '../../models/admin_models.dart';
 import '../../models/profile.dart';
 import '../../services/admin_service.dart';
@@ -382,94 +384,103 @@ class _SuperAdminUsersScreenState extends State<SuperAdminUsersScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final pendingInvites = _invitations.where((i) => i.acceptedAt == null).toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+    return Padding(
+      padding: context.adminPagePadding.copyWith(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text('User Management', style: theme.textTheme.headlineLarge),
-              const Spacer(),
+          ResponsivePageHeader(
+            title: 'User Management',
+            subtitle: 'Create accounts, manage roles, freeze users, and review admin invitations',
+            actions: [
               FilledButton.icon(
                 onPressed: _createAccount,
-                icon: const Icon(Icons.person_add, size: 18),
-                label: const Text('Create Account'),
+                icon: const Icon(Icons.person_add_rounded, size: 18),
+                label: Text(context.isMobile ? 'Create' : 'Create Account'),
               ),
-              const SizedBox(width: 8),
               IconButton(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Manage users, administrators, invitations, and account freezing',
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-          ),
           const SizedBox(height: 24),
           TabBar(
             controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: [
               Tab(text: 'All Users (${_users.length})'),
               Tab(text: 'Admins (${_admins.length})'),
-              Tab(text: 'Pending Invites (${pendingInvites.length})'),
+              Tab(text: 'Invites (${pendingInvites.length})'),
             ],
           ),
           const SizedBox(height: 16),
           if (_tabController.index == 0)
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Search by name or email...',
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                    onSubmitted: (_) => _load(),
+            context.isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: _searchController,
+                        decoration: const InputDecoration(
+                          hintText: 'Search by name or email...',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                        onSubmitted: (_) => _load(),
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton(onPressed: _load, child: const Text('Search')),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: const InputDecoration(
+                            hintText: 'Search by name or email...',
+                            prefixIcon: Icon(Icons.search),
+                          ),
+                          onSubmitted: (_) => _load(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: _load,
+                        child: const Text('Search'),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: _load,
-                  child: const Text('Search'),
-                ),
-              ],
-            ),
           const SizedBox(height: 16),
-          if (_loading && _users.isEmpty && _admins.isEmpty && _invitations.isEmpty)
-            const Center(child: CircularProgressIndicator())
-          else if (_error != null && _users.isEmpty && _admins.isEmpty && _invitations.isEmpty)
-            ErrorBanner(message: _error!)
-          else
-            SizedBox(
-              height: 500,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _UserList(
-                    users: _users,
-                    onFreeze: _toggleFreeze,
-                    onChangeRole: _changeRole,
-                    onDelete: _deleteUser,
-                    showRoleActions: true,
-                  ),
-                  _UserList(
-                    users: _admins,
-                    onFreeze: _toggleFreeze,
-                    onChangeRole: _changeRole,
-                    onDelete: _deleteUser,
-                    showRoleActions: true,
-                  ),
-                  _InvitationList(invitations: pendingInvites),
-                ],
-              ),
-            ),
+          Expanded(
+            child: _loading && _users.isEmpty && _admins.isEmpty && _invitations.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null && _users.isEmpty && _admins.isEmpty && _invitations.isEmpty
+                    ? ErrorBanner(message: _error!)
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _UserList(
+                            users: _users,
+                            onFreeze: _toggleFreeze,
+                            onChangeRole: _changeRole,
+                            onDelete: _deleteUser,
+                            showRoleActions: true,
+                          ),
+                          _UserList(
+                            users: _admins,
+                            onFreeze: _toggleFreeze,
+                            onChangeRole: _changeRole,
+                            onDelete: _deleteUser,
+                            showRoleActions: true,
+                          ),
+                          _InvitationList(invitations: pendingInvites),
+                        ],
+                      ),
+          ),
         ],
       ),
     );
@@ -494,23 +505,105 @@ class _UserList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (users.isEmpty) {
-      return const Card(
+      return PremiumCard(
+        padding: EdgeInsets.zero,
         child: EmptyState(
-          icon: Icons.people_outline,
+          icon: Icons.people_outline_rounded,
           title: 'No users found',
           message: 'No user profiles matched your query.',
         ),
       );
     }
 
-    return Card(
+    return PremiumCard(
+      padding: EdgeInsets.zero,
       child: ListView.separated(
         itemCount: users.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.borderGrey.withValues(alpha: 0.6)),
         itemBuilder: (context, index) {
           final profile = users[index];
           final isFrozen = profile.accountStatus == AccountStatus.frozen;
           final isAdmin = profile.role != UserRole.user;
+          final actionButtons = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (showRoleActions)
+                OutlinedButton(
+                  onPressed: () => onChangeRole(profile),
+                  child: const Text('Change Role'),
+                ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: isFrozen ? AppColors.success : AppColors.error,
+                ),
+                onPressed: () => onFreeze(profile),
+                icon: Icon(isFrozen ? Icons.lock_open : Icons.ac_unit, size: 18),
+                label: Text(isFrozen ? 'Unfreeze' : 'Freeze'),
+              ),
+              IconButton(
+                style: IconButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                ),
+                onPressed: () => onDelete(profile),
+                icon: const Icon(Icons.delete_outline, size: 20),
+                tooltip: 'Delete User Account',
+              ),
+            ],
+          );
+
+          if (context.isCompact) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: isFrozen
+                            ? AppColors.error.withValues(alpha: 0.15)
+                            : AppColors.secondaryBlue.withValues(alpha: 0.12),
+                        child: Icon(
+                          isFrozen ? Icons.ac_unit : (isAdmin ? Icons.admin_panel_settings : Icons.person),
+                          color: isFrozen ? AppColors.error : AppColors.secondaryBlue,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(profile.fullName.isEmpty ? 'Unnamed User' : profile.fullName),
+                            Text(profile.email, style: Theme.of(context).textTheme.bodySmall),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                _Badge(label: profile.role.value, color: AppColors.primaryNavy),
+                                _Badge(
+                                  label: profile.accountStatus.label,
+                                  color: isFrozen ? AppColors.error : AppColors.secondaryBlue,
+                                ),
+                                _Badge(
+                                  label: 'KYC: ${profile.kycStatus.value}',
+                                  color: AppColors.textGrey,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  actionButtons,
+                ],
+              ),
+            );
+          }
 
           return ListTile(
             contentPadding: const EdgeInsets.all(16),
@@ -546,34 +639,7 @@ class _UserList extends StatelessWidget {
                 ),
               ],
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (showRoleActions)
-                  OutlinedButton(
-                    onPressed: () => onChangeRole(profile),
-                    child: const Text('Change Role'),
-                  ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isFrozen ? AppColors.success : AppColors.error,
-                  ),
-                  onPressed: () => onFreeze(profile),
-                  icon: Icon(isFrozen ? Icons.lock_open : Icons.ac_unit, size: 18),
-                  label: Text(isFrozen ? 'Unfreeze' : 'Freeze'),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  style: IconButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                  ),
-                  onPressed: () => onDelete(profile),
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  tooltip: 'Delete User Account',
-                ),
-              ],
-            ),
+            trailing: actionButtons,
           );
         },
       ),
@@ -589,19 +655,21 @@ class _InvitationList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (invitations.isEmpty) {
-      return const Card(
+      return PremiumCard(
+        padding: EdgeInsets.zero,
         child: EmptyState(
-          icon: Icons.mail_outline,
+          icon: Icons.mail_outline_rounded,
           title: 'No pending invitations',
           message: 'Use "Create Admin" to invite new administrators by email.',
         ),
       );
     }
 
-    return Card(
+    return PremiumCard(
+      padding: EdgeInsets.zero,
       child: ListView.separated(
         itemCount: invitations.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.borderGrey.withValues(alpha: 0.6)),
         itemBuilder: (context, index) {
           final invite = invitations[index];
           return ListTile(

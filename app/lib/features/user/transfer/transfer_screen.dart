@@ -4,6 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/formatters.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_decorations.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/premium_widgets.dart';
 import '../../../core/wallet_eligibility.dart';
 import '../../../models/profile.dart';
 import '../../../models/wallet_account.dart';
@@ -45,8 +48,7 @@ class _TransferScreenState extends State<TransferScreen> {
 
   double? get _amount => double.tryParse(_amountController.text.trim());
 
-  double get _resultingBalance =>
-      widget.availableBalance - (_amount ?? 0);
+  double get _resultingBalance => widget.availableBalance - (_amount ?? 0);
 
   Future<void> _submit() async {
     setState(() {
@@ -70,18 +72,19 @@ class _TransferScreenState extends State<TransferScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final eligibility = WalletEligibility(profile: widget.profile);
 
     if (!eligibility.canTransfer) {
       return Center(
-        child: EmptyState(
-          icon: Icons.lock_outline,
-          title: 'Transfers unavailable',
-          message: eligibility.transferLockReason,
-          action: ElevatedButton(
-            onPressed: () => context.go('/app'),
-            child: const Text('Back to dashboard'),
+        child: PremiumCard(
+          child: EmptyState(
+            icon: Icons.lock_outline,
+            title: 'Transfers unavailable',
+            message: eligibility.transferLockReason,
+            action: FilledButton(
+              onPressed: () => context.go('/app'),
+              child: const Text('Back to dashboard'),
+            ),
           ),
         ),
       );
@@ -89,49 +92,74 @@ class _TransferScreenState extends State<TransferScreen> {
 
     if (_confirming) {
       return SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Confirm transfer', style: theme.textTheme.headlineMedium),
-                    const SizedBox(height: 24),
-                    _ConfirmRow(label: 'Recipient', value: _recipientController.text.trim()),
-                    _ConfirmRow(label: 'Amount', value: formatNaira(_amount!)),
-                    _ConfirmRow(
-                      label: 'Balance after',
-                      value: formatNaira(_resultingBalance),
-                    ),
-                    if (_noteController.text.trim().isNotEmpty)
-                      _ConfirmRow(label: 'Note', value: _noteController.text.trim()),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      ErrorBanner(message: _error!),
-                    ],
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: _loading ? null : _submit,
-                      child: _loading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
-                            )
-                          : const Text('Confirm & send'),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: _loading ? null : () => setState(() => _confirming = false),
-                      child: const Text('Go back'),
-                    ),
-                  ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const FormPageHeader(
+                  title: 'Confirm transfer',
+                  subtitle: 'Review the details before sending',
                 ),
-              ),
+                const SizedBox(height: 24),
+                PremiumCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: AppDecorations.navyGradient,
+                          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'You are sending',
+                              style: AppTypography.textTheme.bodySmall?.copyWith(
+                                color: AppColors.white.withValues(alpha: 0.7),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              formatNaira(_amount!),
+                              style: AppTypography.balance.copyWith(fontSize: 36),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Divider(height: 1),
+                      DetailRow(label: 'Recipient', value: _recipientController.text.trim()),
+                      DetailRow(label: 'Balance after', value: formatNaira(_resultingBalance)),
+                      if (_noteController.text.trim().isNotEmpty)
+                        DetailRow(label: 'Note', value: _noteController.text.trim()),
+                      if (_error != null) ...[
+                        const SizedBox(height: 12),
+                        ErrorBanner(message: _error!),
+                      ],
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: _loading ? null : _submit,
+                        child: _loading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                              )
+                            : const Text('Confirm & send'),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton(
+                        onPressed: _loading ? null : () => setState(() => _confirming = false),
+                        child: const Text('Go back'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -139,106 +167,78 @@ class _TransferScreenState extends State<TransferScreen> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Transfer', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: 8),
-              Text(
-                'Available: ${formatNaira(widget.availableBalance)}',
-                style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
+              FormPageHeader(
+                title: 'Transfer',
+                subtitle: 'Available: ${formatNaira(widget.availableBalance)}',
               ),
               const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          controller: _recipientController,
-                          decoration: const InputDecoration(
-                            labelText: 'Recipient email or account number',
-                          ),
-                          validator: (v) =>
-                              v == null || v.trim().length < 3 ? 'Enter recipient details' : null,
+              PremiumCard(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextFormField(
+                        controller: _recipientController,
+                        decoration: const InputDecoration(
+                          labelText: 'Recipient email or account number',
+                          prefixIcon: Icon(Icons.person_outline_rounded),
                         ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _amountController,
-                          decoration: const InputDecoration(
-                            labelText: 'Amount (USD)',
-                            prefixText: '\$ ',
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) {
-                            final amount = double.tryParse(v?.trim() ?? '');
-                            if (amount == null || amount <= 0) return 'Enter a valid amount';
-                            if (amount > widget.availableBalance) {
-                              return 'Insufficient balance';
-                            }
-                            if (amount > 5000000) return 'Maximum transfer is \$5,000,000';
-                            return null;
-                          },
+                        validator: (v) =>
+                            v == null || v.trim().length < 3 ? 'Enter recipient details' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _amountController,
+                        decoration: const InputDecoration(
+                          labelText: 'Amount (USD)',
+                          prefixText: '\$ ',
+                          prefixIcon: Icon(Icons.attach_money_rounded),
                         ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _noteController,
-                          decoration: const InputDecoration(labelText: 'Note (optional)'),
-                          maxLines: 2,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        validator: (v) {
+                          final amount = double.tryParse(v?.trim() ?? '');
+                          if (amount == null || amount <= 0) return 'Enter a valid amount';
+                          if (amount > widget.availableBalance) return 'Insufficient balance';
+                          if (amount > 5000000) return 'Maximum transfer is \$5,000,000';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _noteController,
+                        decoration: const InputDecoration(
+                          labelText: 'Note (optional)',
+                          prefixIcon: Icon(Icons.notes_outlined),
                         ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              setState(() {
-                                _confirming = true;
-                                _error = null;
-                              });
-                            }
-                          },
-                          child: const Text('Review transfer'),
-                        ),
-                      ],
-                    ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            setState(() {
+                              _confirming = true;
+                              _error = null;
+                            });
+                          }
+                        },
+                        child: const Text('Review transfer'),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ConfirmRow extends StatelessWidget {
-  const _ConfirmRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
-          ),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.titleMedium),
-          ),
-        ],
       ),
     );
   }

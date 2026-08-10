@@ -4,6 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/formatters.dart' show formatErrorMessage, formatNaira;
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_decorations.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
+import '../../core/widgets/responsive_layout.dart';
 import '../../models/admin_models.dart';
 import '../../services/admin_service.dart';
 import '../shared/state_widgets.dart';
@@ -75,39 +79,28 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final metrics = _metrics;
     final analytics = _analytics;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: context.adminPagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Super Admin Dashboard', style: theme.textTheme.displayMedium),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Full platform oversight, compliance resolution, and security controls',
-                    style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              IconButton(
+          ResponsivePageHeader(
+            title: 'Super Admin Dashboard',
+            subtitle: 'Full platform oversight, compliance resolution, and security controls',
+            actions: [
+              IconButton.filledTonal(
                 onPressed: _load,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh_rounded),
                 tooltip: 'Refresh metrics',
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           if (_loading && metrics == null && analytics == null)
-            const Center(child: CircularProgressIndicator())
+            const Center(child: CircularProgressIndicator(color: AppColors.secondaryBlue))
           else if (metrics == null && analytics == null)
             ErrorBanner(message: _error ?? 'Failed to load system metrics')
           else ...[
@@ -115,9 +108,8 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
               ErrorBanner(message: _error!),
               const SizedBox(height: 16),
             ],
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
+            ResponsiveMetricGrid(
+              minTileWidth: 160,
               children: [
                 if (metrics != null) ...[
                   _StatTile(
@@ -196,61 +188,49 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
               ],
             ),
             if (metrics != null || analytics != null) ...[
-              const SizedBox(height: 32),
-              Text('Action Needed', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 12),
+              const SizedBox(height: 36),
+              const SectionHeader(title: 'Action Needed'),
+              const SizedBox(height: 16),
               if (metrics != null)
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 320, maxWidth: 500),
-                      child: _ActionCard(
-                        title: 'Withdrawal Review Queue',
-                        count: metrics.pendingWithdrawals,
-                        subtitle: 'Honest withdrawal requests awaiting decision',
-                        buttonText: 'Review Withdrawals',
-                        onPressed: () => context.go('/superadmin/withdrawals'),
-                      ),
+                    _ActionCard(
+                      title: 'Withdrawal Review Queue',
+                      count: metrics.pendingWithdrawals,
+                      subtitle: 'Honest withdrawal requests awaiting decision',
+                      buttonText: 'Review Withdrawals',
+                      onPressed: () => context.go('/superadmin/withdrawals'),
                     ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 320, maxWidth: 500),
-                      child: _ActionCard(
-                        title: 'Flag Resolution Queue',
-                        count: metrics.openFlags,
-                        subtitle: 'Admin-raised transaction flags awaiting Super Admin action',
-                        buttonText: 'Resolve Flags',
-                        onPressed: () => context.go('/superadmin/flags'),
-                      ),
+                    const SizedBox(height: 16),
+                    _ActionCard(
+                      title: 'Flag Resolution Queue',
+                      count: metrics.openFlags,
+                      subtitle: 'Admin-raised transaction flags awaiting Super Admin action',
+                      buttonText: 'Resolve Flags',
+                      onPressed: () => context.go('/superadmin/flags'),
                     ),
                   ],
                 ),
               if (metrics != null && analytics != null) const SizedBox(height: 16),
               if (analytics != null)
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 320, maxWidth: 500),
-                      child: _ActionCard(
-                        title: 'Admin Management',
-                        count: analytics.pendingAdminInvites,
-                        subtitle: 'Create admins, manage roles, and review pending invitations',
-                        buttonText: 'Manage Admins',
-                        onPressed: () => context.go('/superadmin/users'),
-                      ),
+                    _ActionCard(
+                      title: 'Admin Management',
+                      count: analytics.pendingAdminInvites,
+                      subtitle: 'Create admins, manage roles, and review pending invitations',
+                      buttonText: 'Manage Admins',
+                      onPressed: () => context.go('/superadmin/users'),
                     ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 320, maxWidth: 500),
-                      child: _ActionCard(
-                        title: 'Audit Log',
-                        count: analytics.resolvedFlags,
-                        subtitle: 'Full system-wide activity trail for compliance review',
-                        buttonText: 'View Audit Log',
-                        onPressed: () => context.go('/superadmin/audit'),
-                      ),
+                    const SizedBox(height: 16),
+                    _ActionCard(
+                      title: 'Audit Log',
+                      count: analytics.resolvedFlags,
+                      subtitle: 'Full system-wide activity trail for compliance review',
+                      buttonText: 'View Audit Log',
+                      onPressed: () => context.go('/superadmin/audit'),
                     ),
                   ],
                 ),
@@ -281,31 +261,38 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
-        width: 210,
-        child: Card(
-          color: highlight ? AppColors.secondaryBlue.withValues(alpha: 0.1) : null,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, size: 22, color: highlight ? AppColors.secondaryBlue : AppColors.textGrey),
-                const SizedBox(height: 12),
-                Text(value, style: theme.textTheme.headlineLarge),
-                const SizedBox(height: 4),
-                Text(title, style: theme.textTheme.bodySmall),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith(fontSize: 10)),
-                ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+        child: PremiumCard(
+          padding: EdgeInsets.all(context.isMobile ? 16 : 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (highlight ? AppColors.secondaryBlue : AppColors.textMuted).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 22, color: highlight ? AppColors.secondaryBlue : AppColors.textMuted),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                value,
+                style: AppTypography.textTheme.headlineMedium?.copyWith(
+                  fontSize: context.isMobile ? 22 : null,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(title, style: AppTypography.textTheme.bodySmall),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(subtitle!, style: AppTypography.textTheme.bodySmall?.copyWith(fontSize: 10)),
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -330,43 +317,22 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(title, style: theme.textTheme.titleMedium),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: count > 0 ? AppColors.secondaryBlue : AppColors.neutralLightGrey,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '$count pending',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: count > 0 ? AppColors.white : AppColors.textGrey,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(subtitle, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: onPressed,
-              child: Text(buttonText),
-            ),
-          ],
-        ),
+    return PremiumCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(title, style: AppTypography.textTheme.titleMedium),
+              const Spacer(),
+              StatusPill(label: '$count pending', color: count > 0 ? AppColors.secondaryBlue : AppColors.textMuted),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(subtitle, style: AppTypography.textTheme.bodySmall),
+          const SizedBox(height: 20),
+          FilledButton(onPressed: onPressed, child: Text(buttonText)),
+        ],
       ),
     );
   }

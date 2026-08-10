@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_decorations.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
 import '../shared/admin_nav.dart';
 import '../shared/profile_bootstrap.dart';
 import '../shared/sign_out_button.dart';
@@ -29,7 +32,7 @@ class AdminShell extends StatelessWidget {
                     footer: profile.fullName,
                     currentPath: currentPath,
                   ),
-                  Expanded(child: child),
+                  Expanded(child: PageScaffold(child: child)),
                 ],
               ),
             );
@@ -37,8 +40,15 @@ class AdminShell extends StatelessWidget {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('TrustVault Admin'),
-              actions: [const SignOutButton()],
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/images/logo.png', height: 26),
+                  const SizedBox(width: 10),
+                  Text('Admin', style: AppTypography.textTheme.titleMedium),
+                ],
+              ),
+              actions: const [SignOutButton()],
             ),
             drawer: Drawer(
               child: AdminSidebar(
@@ -48,7 +58,7 @@ class AdminShell extends StatelessWidget {
                 inDrawer: true,
               ),
             ),
-            body: child,
+            body: PageScaffold(child: child),
           );
         },
       ),
@@ -76,82 +86,157 @@ class AdminSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-          child: Text(
-            title,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: AppColors.white,
-            ),
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+          child: Row(
+            children: [
+              Image.asset('assets/images/logo.png', height: 32),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TrustVault',
+                    style: AppTypography.textTheme.titleSmall?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    title,
+                    style: AppTypography.textTheme.bodySmall?.copyWith(
+                      color: AppColors.white.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        for (var i = 0; i < items.length; i++) ...[
-          if (sectionDividerAfter != null && i == sectionDividerAfter)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Text(
-                'Super Oversight',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.white.withValues(alpha: 0.6),
-                  letterSpacing: 0.5,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Column(
+            children: [
+              for (var i = 0; i < items.length; i++) ...[
+                if (sectionDividerAfter != null && i == sectionDividerAfter)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                    child: Text(
+                      'SUPER OVERSIGHT',
+                      style: AppTypography.overline.copyWith(
+                        color: AppColors.white.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ),
+                _NavItemTile(
+                  item: items[i],
+                  isSelected: currentPath == items[i].path,
+                  inDrawer: inDrawer,
                 ),
-              ),
-            ),
-          Builder(builder: (context) {
-            final isSelected = currentPath == items[i].path;
-            return ListTile(
-              selected: isSelected,
-              selectedTileColor: AppColors.secondaryBlue.withValues(alpha: 0.35),
-              leading: Icon(
-                isSelected ? items[i].selectedIcon : items[i].icon,
-                color: AppColors.white,
-              ),
-              title: Text(
-                items[i].label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.white,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              onTap: () {
-                if (inDrawer) Navigator.of(context).pop();
-                context.go(items[i].path);
-              },
-            );
-          }),
-        ],
+              ],
+            ],
+          ),
+        ),
         const Spacer(),
-        Divider(color: AppColors.white.withValues(alpha: 0.2)),
+        Divider(color: AppColors.white.withValues(alpha: 0.12), indent: 20, endIndent: 20),
         ListTile(
-          leading: const Icon(Icons.person_outline, color: AppColors.white),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          leading: CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.white.withValues(alpha: 0.12),
+            child: Text(
+              footer.isNotEmpty ? footer[0].toUpperCase() : 'A',
+              style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w600),
+            ),
+          ),
           title: Text(
             footer,
-            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.white),
+            style: AppTypography.textTheme.bodySmall?.copyWith(color: AppColors.white),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           trailing: const SignOutButton(),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
       ],
     );
 
+    final decoration = BoxDecoration(gradient: AppDecorations.authPanelGradient);
+
     if (inDrawer) {
-      return Material(
-        color: AppColors.primaryNavy,
+      return Container(
+        decoration: decoration,
         child: SafeArea(child: content),
       );
     }
 
-    return Material(
-      color: AppColors.primaryNavy,
-      child: SizedBox(
-        width: 260,
-        child: SafeArea(child: content),
+    return Container(
+      width: 268,
+      decoration: decoration,
+      child: SafeArea(child: content),
+    );
+  }
+}
+
+class _NavItemTile extends StatelessWidget {
+  const _NavItemTile({
+    required this.item,
+    required this.isSelected,
+    required this.inDrawer,
+  });
+
+  final AdminNavItem item;
+  final bool isSelected;
+  final bool inDrawer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: isSelected ? AppColors.white.withValues(alpha: 0.12) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            if (inDrawer) Navigator.of(context).pop();
+            context.go(item.path);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? item.selectedIcon : item.icon,
+                  color: isSelected ? AppColors.accentGoldLight : AppColors.white.withValues(alpha: 0.75),
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: AppTypography.textTheme.bodyMedium?.copyWith(
+                      color: isSelected ? AppColors.white : AppColors.white.withValues(alpha: 0.75),
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accentGoldLight,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

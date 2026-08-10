@@ -68,6 +68,8 @@ BEGIN
     RAISE EXCEPTION 'Debit and credit accounts must differ';
   END IF;
 
+  PERFORM set_config('trustvault.allow_ledger_posting', 'true', true);
+
   SELECT balance, profile_id INTO v_debit_balance, v_debit_profile
   FROM public.accounts
   WHERE id = p_debit_account_id

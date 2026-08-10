@@ -13,6 +13,7 @@ import '../../features/admin/admin_transactions_screen.dart';
 import '../../features/shared/withdrawals_review_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/reset_password_screen.dart';
 import '../../features/auth/signup_otp_screen.dart';
 import '../../features/auth/signup_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
@@ -40,22 +41,39 @@ import '../../models/profile.dart';
 import '../../models/wallet_models.dart';
 import '../../services/auth_service.dart';
 import '../../services/wallet_service.dart';
+import '../auth/password_recovery_notifier.dart';
+import '../onboarding/onboarding_prefs.dart';
 
 class AppRouter {
   AppRouter({
     required AuthService authService,
     required ProfileService profileService,
   })  : _authService = authService,
-        _profileService = profileService;
+        _profileService = profileService {
+    _authRefresh = _AuthRefreshListenable(_authService.authStateChanges);
+    _recoveryNotifier = PasswordRecoveryNotifier(_authService.authStateChanges);
+  }
 
   final AuthService _authService;
   final ProfileService _profileService;
+  late final _AuthRefreshListenable _authRefresh;
+  late final PasswordRecoveryNotifier _recoveryNotifier;
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/',
-    refreshListenable: _AuthRefreshListenable(_authService.authStateChanges),
+    initialLocation: '/onboarding',
+    refreshListenable: Listenable.merge([_authRefresh, _recoveryNotifier]),
     redirect: _redirect,
     routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => ResetPasswordScreen(
+          onComplete: _recoveryNotifier.complete,
+        ),
+      ),
       GoRoute(
         path: '/',
         builder: (context, state) => const LoginScreen(),
@@ -89,10 +107,6 @@ class AppRouter {
             },
           ),
         ],
-      ),
-      GoRoute(
-        path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => UserShell(child: child),
@@ -298,15 +312,38 @@ class AppRouter {
   Future<String?> _redirect(BuildContext context, GoRouterState state) async {
     final isLoggedIn = _authService.currentUser != null;
     final location = state.matchedLocation;
+    final isOnboarding = location == '/onboarding';
+    final isResetPassword = location == '/reset-password';
     final isAuthRoute = location == '/' ||
         location == '/signup' ||
         location == '/signup/verify' ||
         location == '/forgot-password';
-    final isOnboarding = location == '/onboarding';
 
-    if (isOnboarding) return null;
+    if (_recoveryNotifier.pending) {
+      return isResetPassword ? null : '/reset-password';
+    }
+
+    if (isResetPassword) {
+      if (isLoggedIn) {
+        final profile = await _profileService.fetchCurrentProfile();
+        return profile?.role.homePath ?? '/app';
+      }
+      return '/forgot-password';
+    }
+
+    if (isOnboarding) {
+      if (isLoggedIn) {
+        final profile = await _profileService.fetchCurrentProfile();
+        return profile?.role.homePath ?? '/app';
+      }
+      return null;
+    }
 
     if (!isLoggedIn) {
+      final onboardingDone = await OnboardingPrefs.hasCompleted();
+      if (!onboardingDone) {
+        return '/onboarding';
+      }
       return isAuthRoute ? null : '/';
     }
 

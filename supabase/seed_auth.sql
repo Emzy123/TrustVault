@@ -46,6 +46,24 @@ BEGIN
       NOW(), NOW(),
       'authenticated', 'authenticated'
     );
+
+    INSERT INTO auth.identities (
+      id, user_id, identity_data, provider, provider_id,
+      last_sign_in_at, created_at, updated_at
+    )
+    VALUES (
+      gen_random_uuid(),
+      v_user_id,
+      jsonb_build_object(
+        'sub', v_user_id::text,
+        'email', p_email,
+        'email_verified', true,
+        'phone_verified', false
+      ),
+      'email',
+      v_user_id::text,
+      NOW(), NOW(), NOW()
+    );
   ELSE
     UPDATE auth.users
     SET encrypted_password = v_encrypted_pw,

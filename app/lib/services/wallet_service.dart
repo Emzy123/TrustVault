@@ -20,20 +20,13 @@ class WalletService {
         .maybeSingle();
 
     if (data == null) {
-      try {
-        final randomNum = (1000000000 + (DateTime.now().millisecondsSinceEpoch % 8999999999)).toString();
-        data = await _client
-            .from('accounts')
-            .upsert({
-              'profile_id': userId,
-              'balance': 0,
-              'currency': 'USD',
-              'account_number': randomNum,
-              'is_system': false,
-            })
-            .select()
-            .maybeSingle();
-      } catch (_) {}
+      // Wallet accounts are created by handle_new_user on signup — not client-side.
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      data = await _client
+          .from('accounts')
+          .select()
+          .eq('profile_id', userId)
+          .maybeSingle();
     }
 
     if (data == null) return null;
@@ -117,17 +110,28 @@ class WalletService {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('Not authenticated');
 
-    final result = await _client.rpc<String>(
-      'submit_kyc_level1',
-      params: {
-        'p_id_type': idType,
-        'p_id_number': idNumber,
-        'p_dob': dob.toIso8601String().split('T').first,
-        'p_address': address,
-        'p_document_url': documentUrl,
-      },
-    );
-    return result;
+    final params = {
+      'p_id_type': idType,
+      'p_id_number': idNumber,
+      'p_dob': dob.toIso8601String().split('T').first,
+      'p_address': address,
+      'p_document_url': documentUrl,
+    };
+
+    try {
+      final result = await _client.rpc<String>(
+        'submit_kyc_level1',
+        params: params,
+      );
+      return result;
+    } on PostgrestException catch (error) {
+      if (!_isMissingKycLevelRpc(error)) rethrow;
+      final fallback = await _client.rpc<String>(
+        'submit_kyc',
+        params: params,
+      );
+      return fallback;
+    }
   }
 
   Future<String> submitKycLevel2({
@@ -185,12 +189,15 @@ class WalletService {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('Not authenticated');
 
+    final params = <String, dynamic>{'p_amount': amount};
+    final trimmedNote = note?.trim();
+    if (trimmedNote != null && trimmedNote.isNotEmpty) {
+      params['p_note'] = trimmedNote;
+    }
+
     final result = await _client.rpc<String>(
       'submit_funding_request',
-      params: {
-        'p_amount': amount,
-        'p_note': note,
-      },
+      params: params,
     );
     return result;
   }
@@ -213,13 +220,18 @@ class WalletService {
     required double amount,
     String? note,
   }) async {
+    final params = <String, dynamic>{
+      'p_recipient': recipient,
+      'p_amount': amount,
+    };
+    final trimmedNote = note?.trim();
+    if (trimmedNote != null && trimmedNote.isNotEmpty) {
+      params['p_note'] = trimmedNote;
+    }
+
     final result = await _client.rpc<String>(
       'transfer_funds',
-      params: {
-        'p_recipient': recipient,
-        'p_amount': amount,
-        'p_note': note,
-      },
+      params: params,
     );
     return result;
   }
@@ -231,12 +243,15 @@ class WalletService {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('Not authenticated');
 
+    final params = <String, dynamic>{'p_amount': amount};
+    final trimmedNote = note?.trim();
+    if (trimmedNote != null && trimmedNote.isNotEmpty) {
+      params['p_note'] = trimmedNote;
+    }
+
     final result = await _client.rpc<String>(
       'request_withdrawal',
-      params: {
-        'p_amount': amount,
-        'p_note': note,
-      },
+      params: params,
     );
     return result;
   }
@@ -262,7 +277,38 @@ class WalletService {
 
 String mapRpcError(Object error) {
   if (error is PostgrestException) {
+    final message = error.message;
+    if (message.contains('No API key found in request')) {
+      return 'Server connection error. Refresh the page and sign in again.';
+    }
+    if (message.contains('Could not find the function') &&
+        message.contains('submit_kyc')) {
+      return 'KYC is not set up on the server. Run supabase/patch_kyc_level_rpcs.sql in the Supabase SQL Editor.';
+    }
+    if (message.contains('Could not find the function') &&
+        (message.contains('transfer_funds') ||
+            message.contains('transfer_fund') ||
+            message.contains('request_withdrawal') ||
+            message.contains('submit_funding_request'))) {
+      return 'Wallet transfers are not set up on the server. Run supabase/patch_transfer_and_wallet_rpcs.sql in the Supabase SQL Editor.';
+    }
+    if (message.contains('Could not choose the best candidate function') &&
+        message.contains('submit_kyc')) {
+      return 'KYC database needs an update. Run supabase/patch_kyc_level_rpcs.sql in the Supabase SQL Editor.';
+    }
+    return message;
+  }
+  if (error is AuthException) {
     return error.message;
   }
+  final text = error.toString();
+  if (text.contains('Not authenticated')) {
+    return 'Your session expired. Please sign in again.';
+  }
   return 'Something went wrong. Please try again.';
+}
+
+bool _isMissingKycLevelRpc(PostgrestException error) {
+  return error.message.contains('Could not find the function') &&
+      error.message.contains('submit_kyc_level1');
 }

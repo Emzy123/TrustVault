@@ -12,4 +12,15 @@ abstract final class Env {
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+
+  static const _passwordResetRedirectBase = String.fromEnvironment(
+    'PASSWORD_RESET_REDIRECT',
+    defaultValue: 'http://localhost:3000',
+  );
+
+  /// Supabase Auth redirect target after the user clicks the email link.
+  static String get passwordResetRedirectUrl {
+    final base = _passwordResetRedirectBase.replaceAll(RegExp(r'/+$'), '');
+    return '$base/reset-password';
+  }
 }

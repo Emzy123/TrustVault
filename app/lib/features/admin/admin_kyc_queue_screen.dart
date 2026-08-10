@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
+import '../../core/widgets/responsive_layout.dart';
 import '../../services/admin_service.dart';
 import '../../services/wallet_service.dart';
 import '../shared/state_widgets.dart';
@@ -131,53 +134,41 @@ class _AdminKycQueueScreenState extends State<AdminKycQueueScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          padding: EdgeInsets.fromLTRB(
+            context.adminPagePadding.left,
+            context.adminPagePadding.top,
+            context.adminPagePadding.right,
+            16,
+          ),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text('KYC Review Queue', style: theme.textTheme.headlineLarge),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Review user identity verification submissions',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-                ),
-              ],
+            child: AdminPageHeader(
+              title: 'KYC Review Queue',
+              subtitle: 'Review user identity verification submissions',
+              onRefresh: _load,
             ),
           ),
         ),
         if (_loading && _queue.isEmpty)
           const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator(color: AppColors.secondaryBlue)),
           )
         else if (_error != null && _queue.isEmpty)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: context.adminPagePadding.left),
               child: ErrorBanner(message: _error!),
             ),
           )
         else if (_queue.isEmpty)
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Card(
+              padding: EdgeInsets.symmetric(horizontal: context.adminPagePadding.left),
+              child: PremiumCard(
                 child: EmptyState(
-                  icon: Icons.check_circle_outline,
+                  icon: Icons.check_circle_outline_rounded,
                   title: 'No pending KYC submissions',
                   message: 'All submitted identity verifications have been processed.',
                 ),
@@ -186,10 +177,15 @@ class _AdminKycQueueScreenState extends State<AdminKycQueueScreen> {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: EdgeInsets.fromLTRB(
+              context.adminPagePadding.left,
+              8,
+              context.adminPagePadding.right,
+              context.adminPagePadding.bottom,
+            ),
             sliver: SliverList.separated(
               itemCount: _queue.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final item = _queue[index];
                 final profile = item['profiles'] as Map<String, dynamic>?;
@@ -204,90 +200,80 @@ class _AdminKycQueueScreenState extends State<AdminKycQueueScreen> {
                 final submissionId = item['id'] as String;
                 final createdAt = DateTime.parse(item['created_at'] as String);
 
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
+                return PremiumCard(
+                  padding: const EdgeInsets.all(18),
+                  child: ResponsiveReviewCard(
+                    leading: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        level == 2 ? Icons.face_rounded : level == 3 ? Icons.home_work_rounded : Icons.badge_outlined,
+                        color: AppColors.secondaryBlue,
+                      ),
+                    ),
+                    body: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.secondaryBlue.withValues(alpha: 0.12),
-                          child: Icon(
-                            level == 2 ? Icons.face : level == 3 ? Icons.home_work : Icons.badge,
-                            color: AppColors.secondaryBlue,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(fullName, style: theme.textTheme.titleMedium),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryBlue.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'Level $level Submission',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryBlue,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(email, style: theme.textTheme.bodySmall),
-                              const SizedBox(height: 8),
-                              if (level == 1) ...[
-                                Wrap(
-                                  spacing: 16,
-                                  runSpacing: 4,
-                                  children: [
-                                    Text('Type: $idType', style: theme.textTheme.bodySmall),
-                                    Text('ID #: $idNumber', style: theme.textTheme.bodySmall),
-                                    Text('Submitted: ${formatDate(createdAt)}', style: theme.textTheme.bodySmall),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text('Address: $address', style: theme.textTheme.bodySmall),
-                              ] else if (level == 2) ...[
-                                Text(
-                                  '📸 Biometric Face Scan: ${faceMatchScore != null ? "${faceMatchScore.toStringAsFixed(1)}% Match Score" : "Selfie Captured"}',
-                                  style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.secondaryBlue),
-                                ),
-                                Text('Submitted: ${formatDate(createdAt)}', style: theme.textTheme.bodySmall),
-                              ] else ...[
-                                Text(
-                                  '📄 Proof of Address Document: ${proofUrl ?? "Uploaded Document"}',
-                                  style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.accentGold),
-                                ),
-                                Text('Submitted: ${formatDate(createdAt)}', style: theme.textTheme.bodySmall),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
                         Wrap(
                           spacing: 8,
-                          runSpacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            OutlinedButton(
-                              style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
-                              onPressed: () => _review(submissionId, false),
-                              child: const Text('Decline'),
-                            ),
-                            FilledButton(
-                              onPressed: () => _review(submissionId, true),
-                              child: const Text('Approve'),
-                            ),
+                            Text(fullName, style: AppTypography.textTheme.titleMedium),
+                            StatusPill(label: 'Level $level', color: AppColors.secondaryBlue),
                           ],
+                        ),
+                        Text(email, style: AppTypography.textTheme.bodySmall),
+                        const SizedBox(height: 8),
+                        if (level == 1) ...[
+                          Wrap(
+                            spacing: 16,
+                            runSpacing: 4,
+                            children: [
+                              Text('Type: $idType', style: AppTypography.textTheme.bodySmall),
+                              Text('ID #: $idNumber', style: AppTypography.textTheme.bodySmall),
+                              Text('Submitted: ${formatDate(createdAt)}', style: AppTypography.textTheme.bodySmall),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Address: $address', style: AppTypography.textTheme.bodySmall),
+                        ] else if (level == 2) ...[
+                          Text(
+                            'Biometric Face Scan: ${faceMatchScore != null ? "${faceMatchScore.toStringAsFixed(1)}% Match" : "Selfie Captured"}',
+                            style: AppTypography.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.secondaryBlue,
+                            ),
+                          ),
+                          Text('Submitted: ${formatDate(createdAt)}', style: AppTypography.textTheme.bodySmall),
+                        ] else ...[
+                          Text(
+                            'Proof of Address: ${proofUrl ?? "Uploaded Document"}',
+                            style: AppTypography.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.accentGold,
+                            ),
+                          ),
+                          Text('Submitted: ${formatDate(createdAt)}', style: AppTypography.textTheme.bodySmall),
+                        ],
+                      ],
+                    ),
+                    actions: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
+                          onPressed: () => _review(submissionId, false),
+                          child: const Text('Decline'),
+                        ),
+                        FilledButton(
+                          onPressed: () => _review(submissionId, true),
+                          child: const Text('Approve'),
                         ),
                       ],
                     ),

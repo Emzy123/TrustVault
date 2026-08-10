@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_typography.dart';
+import '../../core/widgets/premium_widgets.dart';
 import '../admin/admin_shell.dart';
 import '../shared/admin_nav.dart';
 import '../shared/profile_bootstrap.dart';
@@ -30,7 +32,7 @@ class SuperAdminShell extends StatelessWidget {
                     footer: profile.fullName,
                     currentPath: currentPath,
                   ),
-                  Expanded(child: child),
+                  Expanded(child: PageScaffold(child: child)),
                 ],
               ),
             );
@@ -38,8 +40,15 @@ class SuperAdminShell extends StatelessWidget {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('TrustVault Super Admin'),
-              actions: [const SignOutButton()],
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/images/logo.png', height: 26),
+                  const SizedBox(width: 10),
+                  Text('Super Admin', style: AppTypography.textTheme.titleMedium),
+                ],
+              ),
+              actions: const [SignOutButton()],
             ),
             drawer: Drawer(
               child: AdminSidebar(
@@ -50,7 +59,7 @@ class SuperAdminShell extends StatelessWidget {
                 inDrawer: true,
               ),
             ),
-            body: child,
+            body: PageScaffold(child: child),
           );
         },
       ),

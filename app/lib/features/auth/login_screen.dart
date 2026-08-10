@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/premium_widgets.dart';
 import '../../services/auth_service.dart';
+import '../shared/state_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
     } on AuthException catch (error) {
-      setState(() => _errorMessage = error.message);
+      setState(() => _errorMessage = formatErrorMessage(error));
     } catch (_) {
       setState(() => _errorMessage = 'Sign in failed. Please check credentials or network.');
     } finally {
@@ -54,175 +57,95 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AuthPageScaffold(
+      title: 'Welcome back',
+      subtitle: 'Sign in to access your secure vault.',
+      footer: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text("Don't have an account?", style: TextStyle(color: AppColors.textGrey)),
+          TextButton(
+            onPressed: () => context.go('/signup'),
+            child: const Text('Create account'),
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email address',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return 'Email is required';
+                if (!value.contains('@')) return 'Enter a valid email address';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                ),
+              ),
+              obscureText: _obscurePassword,
+              autofillHints: const [AutofillHints.password],
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Password is required';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Center(
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    height: 76,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'TrustVault',
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryNavy,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Secure Digital Banking Platform',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textGrey,
-                    letterSpacing: 0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Sign in to your account',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: 'Email address',
-                              prefixIcon: Icon(Icons.email_outlined),
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            autofillHints: const [AutofillHints.email],
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Email is required';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Enter a valid email address';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                ),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                              ),
-                            ),
-                            obscureText: _obscurePassword,
-                            autofillHints: const [AutofillHints.password],
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Password is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Checkbox(
-                                    value: _rememberMe,
-                                    onChanged: (v) => setState(() => _rememberMe = v ?? true),
-                                  ),
-                                  const Text('Remember me', style: TextStyle(fontSize: 13)),
-                                ],
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  final email = _emailController.text.trim();
-                                  final query = email.isNotEmpty ? '?email=${Uri.encodeComponent(email)}' : '';
-                                  context.go('/forgot-password$query');
-                                },
-                                child: const Text('Forgot password?', style: TextStyle(fontSize: 13)),
-                              ),
-                            ],
-                          ),
-                          if (_errorMessage != null) ...[
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                              ),
-                              child: Text(
-                                _errorMessage!,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: AppColors.error,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            onPressed: _isLoading ? null : _submit,
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.white,
-                                    ),
-                                  )
-                                : const Text('Sign In to Vault', style: TextStyle(fontSize: 16)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account?", style: TextStyle(color: AppColors.textGrey)),
-                    TextButton(
-                      onPressed: () => context.go('/signup'),
-                      child: const Text('Create account', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Checkbox(
+                      value: _rememberMe,
+                      onChanged: (v) => setState(() => _rememberMe = v ?? true),
                     ),
+                    const Text('Remember me', style: TextStyle(fontSize: 13)),
                   ],
+                ),
+                TextButton(
+                  onPressed: () {
+                    final email = _emailController.text.trim();
+                    final query = email.isNotEmpty ? '?email=${Uri.encodeComponent(email)}' : '';
+                    context.go('/forgot-password$query');
+                  },
+                  child: const Text('Forgot password?'),
                 ),
               ],
             ),
-          ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              ErrorBanner(message: _errorMessage!),
+            ],
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _submit,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                    )
+                  : const Text('Sign in to Vault'),
+            ),
+          ],
         ),
       ),
     );
