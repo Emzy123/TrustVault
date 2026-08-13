@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Supabase configuration via compile-time environment variables or defaults.
 abstract final class Env {
   static const supabaseUrl = String.fromEnvironment(
@@ -15,12 +17,20 @@ abstract final class Env {
 
   static const _passwordResetRedirectBase = String.fromEnvironment(
     'PASSWORD_RESET_REDIRECT',
-    defaultValue: 'http://localhost:3000',
+    defaultValue: '',
   );
 
   /// Supabase Auth redirect target after the user clicks the email link.
   static String get passwordResetRedirectUrl {
-    final base = _passwordResetRedirectBase.replaceAll(RegExp(r'/+$'), '');
-    return '$base/reset-password';
+    String base = _passwordResetRedirectBase;
+    if (base.isEmpty) {
+      if (kIsWeb) {
+        base = Uri.base.origin;
+      } else {
+        base = 'http://localhost:3000';
+      }
+    }
+    final cleanBase = base.replaceAll(RegExp(r'/+$'), '');
+    return '$cleanBase/reset-password';
   }
 }

@@ -14,9 +14,27 @@ String formatNaira(num amount) => _currencyFormat.format(amount);
 /// Alias – prefer this name for new code.
 String formatCurrency(num amount) => _currencyFormat.format(amount);
 
-String formatDate(DateTime date) => DateFormat.yMMMd().add_jm().format(date);
+String formatDate(DateTime date) => DateFormat.yMMMd().add_jm().format(date.toLocal());
 
-String formatShortDate(DateTime date) => DateFormat.MMMd().format(date);
+String formatShortDate(DateTime date) => DateFormat.MMMd().format(date.toLocal());
+
+/// Formats date regulated to local country timezone with time zone indicator
+String formatCountryDateTime(DateTime date) {
+  final local = date.toLocal();
+  final formatted = DateFormat.yMMMd().add_jm().format(local);
+  final timeZoneName = local.timeZoneName;
+  return timeZoneName.isNotEmpty ? '$formatted ($timeZoneName)' : formatted;
+}
+
+/// Formats raw account numbers into standard 10-digit bank account representation (e.g. "3081 928 471").
+String formatAccountNumber(String? raw) {
+  if (raw == null || raw.isEmpty) return '—';
+  final digitsOnly = raw.replaceAll(RegExp(r'\D'), '');
+  if (digitsOnly.length == 10) {
+    return '${digitsOnly.substring(0, 4)} ${digitsOnly.substring(4, 7)} ${digitsOnly.substring(7)}';
+  }
+  return raw;
+}
 
 String formatErrorMessage(Object error) {
   String rawMessage;

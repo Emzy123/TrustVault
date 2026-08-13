@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/formatters.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_decorations.dart';
 import '../../../core/theme/app_typography.dart';
@@ -204,7 +205,7 @@ class ProfileScreen extends StatelessWidget {
                   Text('TrustVault Account Number', style: AppTypography.overline),
                   const SizedBox(height: 4),
                   Text(
-                    accountNumber!,
+                    formatAccountNumber(accountNumber),
                     style: AppTypography.textTheme.titleMedium?.copyWith(
                       letterSpacing: 1.2,
                       fontWeight: FontWeight.w700,

@@ -132,7 +132,7 @@ class _TransferScreenState extends State<TransferScreen> {
                       ),
                       const SizedBox(height: 20),
                       const Divider(height: 1),
-                      DetailRow(label: 'Recipient', value: _recipientController.text.trim()),
+                      DetailRow(label: 'Recipient', value: formatAccountNumber(_recipientController.text.trim())),
                       DetailRow(label: 'Balance after', value: formatNaira(_resultingBalance)),
                       if (_noteController.text.trim().isNotEmpty)
                         DetailRow(label: 'Note', value: _noteController.text.trim()),

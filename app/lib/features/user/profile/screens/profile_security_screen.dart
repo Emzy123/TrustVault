@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -279,8 +280,11 @@ class _ProfileSecurityScreenState extends State<ProfileSecurityScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Chrome on Linux (Current Session)', style: AppTypography.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                    Text('Active now · Lagos, Nigeria', style: AppTypography.textTheme.bodySmall),
+                    Text(
+                      kIsWeb ? 'Web Session (Current Session)' : 'Mobile Session (Current Session)',
+                      style: AppTypography.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    Text('Active now · Local Device', style: AppTypography.textTheme.bodySmall),
                   ],
                 ),
               ),

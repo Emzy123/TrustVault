@@ -115,7 +115,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '$greeting, ${profile.fullName.split(' ').first}',
+                  'Hi, ${profile.fullName.split(' ').first}',
                   style: AppTypography.textTheme.headlineMedium?.copyWith(
                     fontSize: context.isMobile ? 22 : null,
                   ),
@@ -144,7 +144,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   balance: formatNaira(balance),
                   subtitle: widget.account == null
                       ? 'Account unavailable'
-                      : 'Acct ${widget.account!.accountNumber} · Available ${formatNaira(widget.availableBalance)}',
+                      : 'Acct ${formatAccountNumber(widget.account!.accountNumber)} · Available ${formatNaira(widget.availableBalance)}',
                   trailing: StatusPill(label: profile.accountStatus.label),
                 ),
                 const SizedBox(height: 16),

@@ -18,6 +18,13 @@ void main() {
       expect(formatDate(date), contains('2026'));
       expect(formatShortDate(date), equals('Jul 24'));
     });
+
+    test('formatAccountNumber formats 10-digit account numbers correctly', () {
+      expect(formatAccountNumber('3081928471'), equals('3081 928 471'));
+      expect(formatAccountNumber('0000000123'), equals('0000 000 123'));
+      expect(formatAccountNumber(null), equals('—'));
+      expect(formatAccountNumber('123'), equals('123'));
+    });
   });
 
   group('Model Deserialization Tests', () {

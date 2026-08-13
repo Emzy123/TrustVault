@@ -91,6 +91,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: () => context.go('/reset-password'),
+          child: const Text('Enter reset code directly'),
+        ),
+        const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () => setState(() => _sent = false),
           child: const Text('Send again'),
