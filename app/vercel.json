@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "if [ ! -d .flutter-sdk ]; then git clone https://github.com/flutter/flutter.git -b stable --depth 1 .flutter-sdk; fi && .flutter-sdk/bin/flutter config --no-analytics && .flutter-sdk/bin/flutter precache --web && .flutter-sdk/bin/flutter pub get",
-  "buildCommand": ".flutter-sdk/bin/flutter build web --release --no-web-resources-cdn --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=PASSWORD_RESET_REDIRECT=${APP_URL:-https://$VERCEL_URL}",
+  "installCommand": "bash ../scripts/vercel-install.sh",
+  "buildCommand": "bash ../scripts/vercel-build.sh",
   "outputDirectory": "build/web",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
