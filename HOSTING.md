@@ -110,11 +110,40 @@ Output: `app/build/web/` — upload this folder to your host.
 
 ### Vercel
 
-- Root directory: `app`
-- Set env vars: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `APP_URL`
-- Vercel does not include Flutter by default — prefer **local build** + Vercel CLI:
+TrustVault is a Flutter app. Vercel does **not** ship Flutter, so a deploy that only
+“imports from GitHub” with no Flutter install produces an empty site → **404: NOT_FOUND**.
+
+#### Required project settings (Vercel Dashboard → Project → Settings)
+
+| Setting | Value |
+|--------|--------|
+| **Framework Preset** | Other |
+| **Root Directory** | `app` *(recommended)* — or leave blank and use the repo-root `vercel.json` |
+| **Build Command** | leave empty to use `vercel.json`, or the Flutter build from that file |
+| **Output Directory** | `build/web` if Root Directory is `app`; else `app/build/web` |
+| **Install Command** | leave empty to use `vercel.json` (clones Flutter stable) |
+
+#### Environment variables
+
+Set these in Vercel → Settings → Environment Variables (Production + Preview):
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `APP_URL` — your live URL, e.g. `https://your-app.vercel.app` (also add it in Supabase Auth redirect URLs)
+
+#### After reconnecting GitHub
+
+1. Confirm **Root Directory = `app`**
+2. Confirm env vars exist
+3. Redeploy **latest commit** (Deployments → … → Redeploy, or push a new commit)
+4. Open the deployment → **Source / Output** tab and confirm `index.html` and `main.dart.js` exist
+
+First build takes several minutes (Flutter SDK download). Later builds are faster if the SDK is cached.
+
+#### Alternative: local build + CLI
 
 ```bash
+./scripts/build-web.sh
 cd app/build/web && npx vercel --prod
 ```
 
