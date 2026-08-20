@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Install Flutter for Vercel (or any CI) when the SDK is not on PATH.
+# Pin to the same stable release used for local TrustVault development.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SDK="${FLUTTER_SDK:-$ROOT/.flutter-sdk}"
+# Keep in sync with local Flutter (see `flutter --version` on the project machine).
+FLUTTER_VERSION="${FLUTTER_VERSION:-3.27.4}"
 
-if [[ ! -x "$SDK/bin/flutter" ]]; then
+if [[ ! -x "$SDK/bin/flutter" ]] || ! "$SDK/bin/flutter" --version 2>/dev/null | grep -q "$FLUTTER_VERSION"; then
   rm -rf "$SDK"
-  git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$SDK"
+  git clone https://github.com/flutter/flutter.git -b "$FLUTTER_VERSION" --depth 1 "$SDK"
 fi
 
 "$SDK/bin/flutter" config --no-analytics
