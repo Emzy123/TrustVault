@@ -12,6 +12,8 @@ app/.dart_tool/
 app/build/
 app/.flutter-plugins
 app/.flutter-plugins-dependencies
+.flutter-sdk/
+app/.flutter-sdk/
 
 # IDE
 .idea/
