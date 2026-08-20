@@ -1,54 +1,90 @@
--- Fix super-admin-created (and other manual) users that cannot log in.
--- Error: "Database error querying schema" / formatErrorMessage schema hint
---
--- Causes:
---   • create_user_account inserted auth.users without auth.identities
---   • Some rows may have NULL token columns (GoTrue requires empty strings)
+-- TrustVault: 11-digit unique wallet account numbers for new registrations / creations
 
--- ---------------------------------------------------------------------------
--- 1. Repair existing auth.users rows
--- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.next_account_number()
+RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_next BIGINT;
+BEGIN
+  v_next := nextval('public.account_number_seq');
+  -- Prefer a true 11-digit range once the sequence is still in the old 10-digit band.
+  IF v_next < 10000000000 THEN
+    PERFORM setval('public.account_number_seq', 10000000000, true);
+    v_next := nextval('public.account_number_seq');
+  END IF;
+  RETURN LPAD(v_next::TEXT, 11, '0');
+END;
+$$;
 
-UPDATE auth.users SET confirmation_token = '' WHERE confirmation_token IS NULL;
-UPDATE auth.users SET recovery_token = '' WHERE recovery_token IS NULL;
-UPDATE auth.users SET email_change = '' WHERE email_change IS NULL;
-UPDATE auth.users SET email_change_token_new = '' WHERE email_change_token_new IS NULL;
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_role public.user_role := 'user';
+  v_next_acc TEXT;
+  v_invite public.admin_invitations%ROWTYPE;
+BEGIN
+  IF NEW.email = 'admin@trustvault.demo' THEN
+    v_role := 'admin';
+  ELSIF NEW.email = 'superadmin@trustvault.demo' THEN
+    v_role := 'super_admin';
+  END IF;
 
-INSERT INTO auth.identities (
-  id,
-  user_id,
-  identity_data,
-  provider,
-  provider_id,
-  last_sign_in_at,
-  created_at,
-  updated_at
-)
-SELECT
-  gen_random_uuid(),
-  u.id,
-  jsonb_build_object(
-    'sub', u.id::text,
-    'email', u.email,
-    'email_verified', u.email_confirmed_at IS NOT NULL,
-    'phone_verified', false
-  ),
-  'email',
-  u.id::text,
-  COALESCE(u.last_sign_in_at, u.created_at, NOW()),
-  COALESCE(u.created_at, NOW()),
-  COALESCE(u.updated_at, NOW())
-FROM auth.users u
-WHERE u.email IS NOT NULL
-  AND NOT EXISTS (
-    SELECT 1
-    FROM auth.identities i
-    WHERE i.user_id = u.id AND i.provider = 'email'
-  );
+  IF v_role = 'user' AND NEW.email IS NOT NULL THEN
+    SELECT * INTO v_invite
+    FROM public.admin_invitations
+    WHERE LOWER(email) = LOWER(NEW.email)
+      AND accepted_at IS NULL
+    LIMIT 1;
 
--- ---------------------------------------------------------------------------
--- 2. Fix create_user_account for future super-admin creations
--- ---------------------------------------------------------------------------
+    IF FOUND THEN
+      v_role := v_invite.role;
+    END IF;
+  END IF;
+
+  INSERT INTO public.profiles (id, full_name, email, phone, role, account_status, kyc_status)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data ->> 'full_name', ''),
+    COALESCE(NEW.email, ''),
+    NEW.raw_user_meta_data ->> 'phone',
+    v_role,
+    'unverified',
+    'not_submitted'
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    phone = COALESCE(EXCLUDED.phone, public.profiles.phone),
+    role = CASE
+      WHEN EXCLUDED.email IN ('admin@trustvault.demo', 'superadmin@trustvault.demo') THEN v_role
+      WHEN public.profiles.role IN ('admin', 'super_admin') THEN public.profiles.role
+      ELSE EXCLUDED.role
+    END,
+    full_name = CASE WHEN EXCLUDED.full_name <> '' THEN EXCLUDED.full_name ELSE public.profiles.full_name END;
+
+  IF v_invite.id IS NOT NULL THEN
+    UPDATE public.admin_invitations
+    SET accepted_at = NOW(), profile_id = NEW.id
+    WHERE id = v_invite.id AND accepted_at IS NULL;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.accounts WHERE profile_id = NEW.id AND is_system = FALSE) THEN
+    v_next_acc := public.next_account_number();
+    INSERT INTO public.accounts (profile_id, balance, currency, account_number)
+    VALUES (NEW.id, 0, 'NGN', v_next_acc)
+    ON CONFLICT (profile_id) DO NOTHING;
+  END IF;
+
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'handle_new_user trigger error: %', SQLERRM;
+  RETURN NEW;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_user_account(
   p_email TEXT,

@@ -34,9 +34,10 @@
     }
   }, 45000);
 
+  // Prefer local CanvasKit assets (built with --no-web-resources-cdn) so devices
+  // that block Google CDNs can still start. Fall back to HTML renderer if CanvasKit fails.
   _flutter.loader
     .load({
-      // Skip service worker for maximum compatibility across desktops.
       onEntrypointLoaded: function (engineInitializer) {
         return engineInitializer.initializeEngine().then(function (appRunner) {
           hideLoading();
@@ -48,7 +49,8 @@
       console.error('TrustVault bootstrap failed', error);
       showError(
         'Unable to start TrustVault in this browser. Update your browser, enable hardware ' +
-          'acceleration, or try Chrome/Edge. If the problem persists, hard-refresh the page.'
+          'acceleration, or try Chrome/Edge. If the problem persists, hard-refresh the page ' +
+          '(Ctrl+Shift+R / Cmd+Shift+R).'
       );
     });
 })();

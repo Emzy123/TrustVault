@@ -141,7 +141,7 @@ BEGIN
     kyc_status = 'approved';
 
   IF NOT EXISTS (SELECT 1 FROM public.accounts WHERE profile_id = v_user_id AND is_system = FALSE) THEN
-    v_next_acc := LPAD(nextval('public.account_number_seq')::TEXT, 10, '0');
+    v_next_acc := public.next_account_number();
     INSERT INTO public.accounts (profile_id, balance, currency, account_number)
     VALUES (v_user_id, 0, 'NGN', v_next_acc)
     ON CONFLICT (profile_id) DO NOTHING;

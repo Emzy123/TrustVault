@@ -435,12 +435,16 @@ class BalanceHeroCard extends StatelessWidget {
     required this.balance,
     required this.subtitle,
     this.trailing,
+    this.balancesVisible = true,
+    this.onToggleVisibility,
   });
 
   final String balanceLabel;
   final String balance;
   final String subtitle;
   final Widget? trailing;
+  final bool balancesVisible;
+  final VoidCallback? onToggleVisibility;
 
   @override
   Widget build(BuildContext context) {
@@ -478,7 +482,24 @@ class BalanceHeroCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (trailing != null) trailing!,
+                    if (onToggleVisibility != null)
+                      IconButton(
+                        onPressed: onToggleVisibility,
+                        tooltip: balancesVisible ? 'Hide balances' : 'Show balances',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                        icon: Icon(
+                          balancesVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: AppColors.white.withValues(alpha: 0.85),
+                          size: 22,
+                        ),
+                      ),
+                    if (trailing != null) ...[
+                      if (onToggleVisibility != null) const SizedBox(width: 4),
+                      trailing!,
+                    ],
                   ],
                 ),
                 const SizedBox(height: 12),

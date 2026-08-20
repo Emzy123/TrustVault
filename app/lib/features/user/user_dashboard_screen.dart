@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/balance_visibility.dart';
 import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_decorations.dart';
@@ -37,13 +38,26 @@ class UserDashboardScreen extends StatefulWidget {
 class _UserDashboardScreenState extends State<UserDashboardScreen> {
   List<WalletTransaction> _recent = [];
   bool _loadingRecent = true;
+  bool _balancesVisible = true;
   RealtimeChannel? _txChannel;
 
   @override
   void initState() {
     super.initState();
+    _loadVisibility();
     _loadRecent();
     _subscribeRealtime();
+  }
+
+  Future<void> _loadVisibility() async {
+    final visible = await BalanceVisibility.isVisible();
+    if (mounted) setState(() => _balancesVisible = visible);
+  }
+
+  Future<void> _toggleBalances() async {
+    final next = !_balancesVisible;
+    setState(() => _balancesVisible = next);
+    await BalanceVisibility.setVisible(next);
   }
 
   void _subscribeRealtime() {
@@ -97,7 +111,14 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     final profile = widget.profile;
     final eligibility = WalletEligibility(profile: profile);
     final balance = widget.account?.balance ?? 0;
-    final greeting = _greetingForTime();
+    final displayBalance = BalanceVisibility.maskOrFormat(
+      _balancesVisible,
+      formatNaira(balance),
+    );
+    final availableText = BalanceVisibility.maskOrFormat(
+      _balancesVisible,
+      formatNaira(widget.availableBalance),
+    );
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -141,10 +162,12 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                 ],
                 BalanceHeroCard(
                   balanceLabel: 'Total balance',
-                  balance: formatNaira(balance),
+                  balance: displayBalance,
                   subtitle: widget.account == null
                       ? 'Account unavailable'
-                      : 'Acct ${formatAccountNumber(widget.account!.accountNumber)} · Available ${formatNaira(widget.availableBalance)}',
+                      : 'Acct ${formatAccountNumber(widget.account!.accountNumber)} · Available $availableText',
+                  balancesVisible: _balancesVisible,
+                  onToggleVisibility: _toggleBalances,
                   trailing: StatusPill(label: profile.accountStatus.label),
                 ),
                 const SizedBox(height: 16),
@@ -218,13 +241,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         ),
       ),
     );
-  }
-
-  String _greetingForTime() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
   }
 }
 

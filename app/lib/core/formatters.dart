@@ -26,10 +26,13 @@ String formatCountryDateTime(DateTime date) {
   return timeZoneName.isNotEmpty ? '$formatted ($timeZoneName)' : formatted;
 }
 
-/// Formats raw account numbers into standard 10-digit bank account representation (e.g. "3081 928 471").
+/// Formats raw account numbers for display (11-digit preferred; legacy 10-digit supported).
 String formatAccountNumber(String? raw) {
   if (raw == null || raw.isEmpty) return '—';
   final digitsOnly = raw.replaceAll(RegExp(r'\D'), '');
+  if (digitsOnly.length == 11) {
+    return '${digitsOnly.substring(0, 3)} ${digitsOnly.substring(3, 7)} ${digitsOnly.substring(7)}';
+  }
   if (digitsOnly.length == 10) {
     return '${digitsOnly.substring(0, 4)} ${digitsOnly.substring(4, 7)} ${digitsOnly.substring(7)}';
   }

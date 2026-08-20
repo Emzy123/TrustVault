@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/balance_visibility.dart';
 import '../../core/formatters.dart' show formatErrorMessage, formatNaira;
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_decorations.dart';
@@ -23,12 +24,25 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
   SuperAdminMetrics? _metrics;
   PlatformAnalytics? _analytics;
   bool _loading = true;
+  bool _balancesVisible = true;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _loadVisibility();
     _load();
+  }
+
+  Future<void> _loadVisibility() async {
+    final visible = await BalanceVisibility.isVisible();
+    if (mounted) setState(() => _balancesVisible = visible);
+  }
+
+  Future<void> _toggleBalances() async {
+    final next = !_balancesVisible;
+    setState(() => _balancesVisible = next);
+    await BalanceVisibility.setVisible(next);
   }
 
   Future<void> _load() async {
@@ -91,6 +105,13 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
             title: 'Super Admin Dashboard',
             subtitle: 'Full platform oversight, compliance resolution, and security controls',
             actions: [
+              IconButton.filledTonal(
+                onPressed: _toggleBalances,
+                icon: Icon(
+                  _balancesVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                ),
+                tooltip: _balancesVisible ? 'Hide balances' : 'Show balances',
+              ),
               IconButton.filledTonal(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded),
@@ -161,7 +182,10 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                   ),
                   _StatTile(
                     title: 'Total Volume',
-                    value: formatNaira(metrics.totalVolume),
+                    value: BalanceVisibility.maskOrFormat(
+                      _balancesVisible,
+                      formatNaira(metrics.totalVolume),
+                    ),
                     icon: Icons.account_balance_wallet,
                   ),
                 ],
@@ -174,7 +198,10 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                   ),
                   _StatTile(
                     title: '7-Day Volume',
-                    value: formatNaira(analytics.volume7d),
+                    value: BalanceVisibility.maskOrFormat(
+                      _balancesVisible,
+                      formatNaira(analytics.volume7d),
+                    ),
                     icon: Icons.trending_up,
                   ),
                   _StatTile(

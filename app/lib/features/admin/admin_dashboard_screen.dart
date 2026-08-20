@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/balance_visibility.dart';
 import '../../core/formatters.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_decorations.dart';
@@ -22,12 +23,25 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   AdminMetrics? _metrics;
   bool _loading = true;
+  bool _balancesVisible = true;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _loadVisibility();
     _load();
+  }
+
+  Future<void> _loadVisibility() async {
+    final visible = await BalanceVisibility.isVisible();
+    if (mounted) setState(() => _balancesVisible = visible);
+  }
+
+  Future<void> _toggleBalances() async {
+    final next = !_balancesVisible;
+    setState(() => _balancesVisible = next);
+    await BalanceVisibility.setVisible(next);
   }
 
   Future<void> _load() async {
@@ -59,6 +73,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             title: 'Admin Dashboard',
             subtitle: 'Real-time oversight queues and platform activity',
             actions: [
+              IconButton.filledTonal(
+                onPressed: _toggleBalances,
+                icon: Icon(
+                  _balancesVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                ),
+                tooltip: _balancesVisible ? 'Hide balances' : 'Show balances',
+              ),
               IconButton.filledTonal(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded),
@@ -109,7 +130,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _MetricCard(
                   title: '24h volume',
-                  value: formatNaira(metrics.dailyVolume),
+                  value: BalanceVisibility.maskOrFormat(
+                    _balancesVisible,
+                    formatNaira(metrics.dailyVolume),
+                  ),
                   icon: Icons.show_chart_rounded,
                 ),
               ],

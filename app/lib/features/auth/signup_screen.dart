@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/countries.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/premium_widgets.dart';
 import '../../services/email_service.dart';
@@ -20,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  CountryDial _country = kRegistrationCountries.first;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -51,7 +54,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             'email': _emailController.text.trim(),
             'password': _passwordController.text,
             'fullName': _fullNameController.text.trim(),
-            'phone': _phoneController.text.trim(),
+            'phone': _country.formatPhone(_phoneController.text.trim()),
           },
         );
       }
@@ -81,7 +84,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           children: [
             TextFormField(
               controller: _fullNameController,
-              decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
+              decoration: const InputDecoration(
+                labelText: 'Full name',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
               textCapitalization: TextCapitalization.words,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) return 'Full name is required';
@@ -89,19 +95,45 @@ class _SignUpScreenState extends State<SignUpScreen> {
               },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _phoneController,
-              decoration: const InputDecoration(labelText: 'Phone number', prefixIcon: Icon(Icons.phone_outlined)),
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) return 'Phone number is required';
-                return null;
+            DropdownButtonFormField<CountryDial>(
+              value: _country,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Country',
+                prefixIcon: Icon(Icons.public_outlined),
+              ),
+              items: [
+                for (final country in kRegistrationCountries)
+                  DropdownMenuItem(
+                    value: country,
+                    child: Text(country.label, overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _country = value);
               },
             ),
             const SizedBox(height: 16),
             TextFormField(
+              controller: _phoneController,
+              decoration: InputDecoration(
+                labelText: 'Phone number',
+                hintText: 'Local number without country code',
+                prefixIcon: const Icon(Icons.phone_outlined),
+                prefixText: '+${_country.dialCode} ',
+              ),
+              keyboardType: TextInputType.phone,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              validator: (value) => _country.validateNational(value),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) return 'Email is required';
@@ -112,10 +144,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline)),
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
               obscureText: true,
               validator: (value) {
-                if (value == null || value.length < 8) return 'Password must be at least 8 characters';
+                if (value == null || value.length < 8) {
+                  return 'Password must be at least 8 characters';
+                }
                 return null;
               },
             ),
