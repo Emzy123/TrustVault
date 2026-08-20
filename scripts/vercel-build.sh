@@ -28,7 +28,7 @@ fi
 REDIRECT="${APP_URL:-https://${VERCEL_URL:-localhost}}"
 
 cd "$APP_DIR"
-"$SDK/bin/flutter" build web --release --no-web-resources-cdn --no-wasm-dry-run \
+"$SDK/bin/flutter" build web --release --no-web-resources-cdn \
   --dart-define=SUPABASE_URL="${SUPABASE_URL:-}" \
   --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY:-}" \
   --dart-define=PASSWORD_RESET_REDIRECT="$REDIRECT"
