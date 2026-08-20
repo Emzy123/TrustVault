@@ -19,10 +19,9 @@ void main() {
       expect(formatShortDate(date), equals('Jul 24'));
     });
 
-    test('formatAccountNumber formats 10- and 11-digit account numbers', () {
+    test('formatAccountNumber formats 10-digit account numbers correctly', () {
       expect(formatAccountNumber('3081928471'), equals('3081 928 471'));
-      expect(formatAccountNumber('0000000123'), equals('0000 000 123'));
-      expect(formatAccountNumber('10000000001'), equals('100 0000 0001'));
+      expect(formatAccountNumber('2045839176'), equals('2045 839 176'));
       expect(formatAccountNumber(null), equals('—'));
       expect(formatAccountNumber('123'), equals('123'));
     });
@@ -55,14 +54,14 @@ void main() {
         'profile_id': 'p-123',
         'balance': 150000.75,
         'currency': 'NGN',
-        'account_number': '0000000123',
+        'account_number': '3081928471',
         'is_system': false,
       };
 
       final account = WalletAccount.fromJson(json);
       expect(account.id, equals('acc-789'));
       expect(account.balance, equals(150000.75));
-      expect(account.accountNumber, equals('0000000123'));
+      expect(account.accountNumber, equals('3081928471'));
     });
 
     test('WalletTransaction.fromJson determines incoming vs outgoing correctly', () {

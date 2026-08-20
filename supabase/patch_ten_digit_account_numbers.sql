@@ -1,19 +1,77 @@
--- Run in Supabase SQL Editor if migrations are already applied on the hosted project.
--- Makes every newly registered / created wallet use a unique 11-digit account number.
+-- Run in Supabase SQL Editor on the hosted project.
+-- Switches wallet account numbers to unique realistic 10-digit values (no 000000… padding).
 
 CREATE OR REPLACE FUNCTION public.next_account_number()
 RETURNS TEXT
 LANGUAGE plpgsql
 AS $$
 DECLARE
-  v_next BIGINT;
+  v_candidate TEXT;
+  v_attempts INT := 0;
+  v_last BIGINT;
 BEGIN
-  v_next := nextval('public.account_number_seq');
-  IF v_next < 10000000000 THEN
-    PERFORM setval('public.account_number_seq', 10000000000, true);
-    v_next := nextval('public.account_number_seq');
+  SELECT last_value INTO v_last FROM public.account_number_seq;
+  IF v_last IS NULL OR v_last < 2000000000 OR v_last >= 10000000000 THEN
+    PERFORM setval(
+      'public.account_number_seq',
+      GREATEST(
+        3081928400::BIGINT,
+        COALESCE(
+          (
+            SELECT MAX(account_number::BIGINT)
+            FROM public.accounts
+            WHERE account_number ~ '^[1-9][0-9]{9}$'
+          ),
+          3081928400::BIGINT
+        )
+      ),
+      true
+    );
   END IF;
-  RETURN LPAD(v_next::TEXT, 11, '0');
+
+  LOOP
+    v_attempts := v_attempts + 1;
+    IF v_attempts > 40 THEN
+      v_candidate := (
+        2000000000 + (nextval('public.account_number_seq') % 8000000000)
+      )::TEXT;
+    ELSE
+      v_candidate :=
+        (2 + floor(random() * 8)::INT)::TEXT ||
+        lpad(floor(random() * 1000000000)::BIGINT::TEXT, 9, '0');
+    END IF;
+
+    EXIT WHEN NOT EXISTS (
+      SELECT 1 FROM public.accounts WHERE account_number = v_candidate
+    );
+  END LOOP;
+
+  RETURN v_candidate;
+END;
+$$;
+
+DO $$
+DECLARE
+  r RECORD;
+  v_new TEXT;
+BEGIN
+  FOR r IN
+    SELECT id, account_number
+    FROM public.accounts
+    WHERE is_system = FALSE
+      AND (
+        account_number IS NULL
+        OR account_number !~ '^[1-9][0-9]{9}$'
+        OR account_number ~ '^0'
+        OR account_number LIKE '0000%'
+        OR length(regexp_replace(account_number, '\D', '', 'g')) <> 10
+      )
+  LOOP
+    v_new := public.next_account_number();
+    UPDATE public.accounts
+    SET account_number = v_new
+    WHERE id = r.id;
+  END LOOP;
 END;
 $$;
 
@@ -159,7 +217,12 @@ BEGIN
     id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
   ) VALUES (
     gen_random_uuid(), v_user_id,
-    jsonb_build_object('sub', v_user_id::text, 'email', v_email, 'email_verified', true, 'phone_verified', false),
+    jsonb_build_object(
+      'sub', v_user_id::text,
+      'email', v_email,
+      'email_verified', true,
+      'phone_verified', false
+    ),
     'email', v_user_id::text, NOW(), NOW(), NOW()
   );
 
