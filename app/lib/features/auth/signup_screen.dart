@@ -35,6 +35,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  Future<void> _pickCountry() async {
+    final selected = await showDialog<CountryDial>(
+      context: context,
+      builder: (context) => _CountryPickerDialog(selected: _country),
+    );
+    if (selected != null && mounted) {
+      setState(() => _country = selected);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -95,24 +105,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
               },
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<CountryDial>(
-              value: _country,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Country',
-                prefixIcon: Icon(Icons.public_outlined),
+            InkWell(
+              onTap: _pickCountry,
+              borderRadius: BorderRadius.circular(4),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Country',
+                  prefixIcon: Icon(Icons.public_outlined),
+                  suffixIcon: Icon(Icons.arrow_drop_down),
+                ),
+                child: Text(
+                  _country.label,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              items: [
-                for (final country in kRegistrationCountries)
-                  DropdownMenuItem(
-                    value: country,
-                    child: Text(country.label, overflow: TextOverflow.ellipsis),
-                  ),
-              ],
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _country = value);
-              },
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -170,6 +176,115 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
                     )
                   : const Text('Send verification code'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CountryPickerDialog extends StatefulWidget {
+  const _CountryPickerDialog({required this.selected});
+
+  final CountryDial selected;
+
+  @override
+  State<_CountryPickerDialog> createState() => _CountryPickerDialogState();
+}
+
+class _CountryPickerDialogState extends State<_CountryPickerDialog> {
+  late final TextEditingController _searchController;
+  late List<CountryDial> _filtered;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _filtered = kRegistrationCountries;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearch(String query) {
+    final q = query.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _filtered = kRegistrationCountries;
+      } else {
+        _filtered = kRegistrationCountries
+            .where(
+              (c) =>
+                  c.name.toLowerCase().contains(q) ||
+                  c.dialCode.contains(q) ||
+                  c.iso2.toLowerCase().contains(q),
+            )
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420, maxHeight: 560),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Select country',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search by name or code',
+                  prefixIcon: Icon(Icons.search),
+                  isDense: true,
+                ),
+                onChanged: _onSearch,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _filtered.isEmpty
+                  ? const Center(child: Text('No countries match'))
+                  : ListView.builder(
+                      itemCount: _filtered.length,
+                      itemBuilder: (context, index) {
+                        final country = _filtered[index];
+                        final isSelected = country.iso2 == widget.selected.iso2 &&
+                            country.dialCode == widget.selected.dialCode;
+                        return ListTile(
+                          dense: true,
+                          title: Text(country.name),
+                          trailing: Text('+${country.dialCode}'),
+                          selected: isSelected,
+                          onTap: () => Navigator.of(context).pop(country),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
