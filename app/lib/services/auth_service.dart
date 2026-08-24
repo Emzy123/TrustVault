@@ -16,33 +16,10 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final cleanEmail = email.trim();
-    try {
-      return await _client.auth.signInWithPassword(
-        email: cleanEmail,
-        password: password,
-      );
-    } on AuthException {
-      if (cleanEmail.endsWith('@trustvault.demo')) {
-        try {
-          final prefix = cleanEmail.split('@').first;
-          final name = prefix[0].toUpperCase() + prefix.substring(1);
-          await _client.auth.signUp(
-            email: cleanEmail,
-            password: password,
-            data: {
-              'full_name': '$name Demo',
-              'phone': '+2348000000000',
-            },
-          );
-          return await _client.auth.signInWithPassword(
-            email: cleanEmail,
-            password: password,
-          );
-        } catch (_) {}
-      }
-      rethrow;
-    }
+    return _client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
   }
 
   Future<AuthResponse> signUp({

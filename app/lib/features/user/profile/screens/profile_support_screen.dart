@@ -20,7 +20,7 @@ class _ProfileSupportScreenState extends State<ProfileSupportScreen> {
     _FaqItem(
       question: 'How long does KYC identity verification take?',
       answer:
-          'Identity verification is reviewed promptly by compliance officers. During demo mode, submissions are processed in real-time or within minutes.',
+          'Identity verification is reviewed promptly by compliance officers. Most submissions are processed within minutes.',
     ),
     _FaqItem(
       question: 'How do peer-to-peer transfers work?',

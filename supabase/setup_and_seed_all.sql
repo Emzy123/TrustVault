@@ -2,7 +2,7 @@
 --
 -- Copy and paste this ENTIRE script into your Supabase Dashboard SQL Editor and click 'Run'.
 -- It creates all tables, triggers, ledger functions, RLS policies, schema permissions,
--- and pre-confirmed demo users without deleting existing records.
+-- and pre-confirmed seed users without deleting existing records.
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -954,25 +954,6 @@ END;
 $$;
 
 DROP FUNCTION IF EXISTS public.get_demo_otp(TEXT) CASCADE;
-CREATE OR REPLACE FUNCTION public.get_demo_otp(p_email TEXT)
-RETURNS TEXT
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_otp TEXT;
-BEGIN
-  SELECT payload->>'otp' INTO v_otp
-  FROM public.email_outbox
-  WHERE LOWER(recipient_email) = LOWER(TRIM(p_email))
-  ORDER BY created_at DESC
-  LIMIT 1;
-
-  RETURN COALESCE(v_otp, '123456');
-END;
-$$;
-
 DROP FUNCTION IF EXISTS public.complete_registration(TEXT, TEXT, TEXT, TEXT, TEXT) CASCADE;
 CREATE OR REPLACE FUNCTION public.complete_registration(
   p_email TEXT,
@@ -1033,32 +1014,24 @@ BEGIN
   ORDER BY created_at DESC
   LIMIT 1;
 
-  IF TRIM(p_otp) NOT IN ('123456', '000000', '111111') THEN
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'Verification code expired or not found. Request a new code.';
-    END IF;
-
-    IF v_otp_row.attempts >= 5 THEN
-      RAISE EXCEPTION 'Too many failed attempts. Request a new verification code.';
-    END IF;
-
-    IF v_otp_row.otp_hash <> crypt(TRIM(p_otp), v_otp_row.otp_hash) THEN
-      UPDATE public.registration_otps
-      SET attempts = attempts + 1
-      WHERE id = v_otp_row.id;
-      RAISE EXCEPTION 'Invalid verification code';
-    END IF;
-
-    UPDATE public.registration_otps
-    SET verified_at = NOW()
-    WHERE id = v_otp_row.id;
-  ELSE
-    IF FOUND THEN
-      UPDATE public.registration_otps
-      SET verified_at = NOW()
-      WHERE id = v_otp_row.id;
-    END IF;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Verification code expired or not found. Request a new code.';
   END IF;
+
+  IF v_otp_row.attempts >= 5 THEN
+    RAISE EXCEPTION 'Too many failed attempts. Request a new verification code.';
+  END IF;
+
+  IF v_otp_row.otp_hash <> crypt(TRIM(p_otp), v_otp_row.otp_hash) THEN
+    UPDATE public.registration_otps
+    SET attempts = attempts + 1
+    WHERE id = v_otp_row.id;
+    RAISE EXCEPTION 'Invalid verification code';
+  END IF;
+
+  UPDATE public.registration_otps
+  SET verified_at = NOW()
+  WHERE id = v_otp_row.id;
 
   v_encrypted_pw := crypt(p_password, gen_salt('bf'));
 
@@ -1110,5 +1083,4 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.request_registration_otp(TEXT) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.get_demo_otp(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.complete_registration(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;

@@ -20,11 +20,11 @@ This phase delivers:
 - Transaction history and detail views
 - Loading, empty, and error states on all new screens
 
-**Exit criteria:** a verified demo user can request funding, transfer, and submit a withdrawal end-to-end.
+**Exit criteria:** a verified user can request funding, transfer, and submit a withdrawal end-to-end.
 
-### Demo accounts (optional)
+### Seed accounts (optional)
 
-Sign up `alice@trustvault.demo` and `bob@trustvault.demo`, then run `supabase db reset` or apply `supabase/seed.sql` to pre-approve KYC and fund Alice with ₦50,000.
+Create users in Auth, then run `supabase db reset` or apply `supabase/seed.sql` to pre-approve KYC and fund a sample wallet.
 
 ## Project structure
 

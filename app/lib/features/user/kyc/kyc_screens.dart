@@ -624,7 +624,7 @@ class KycPendingScreen extends StatelessWidget {
                 Text('Pending verification', style: theme.textTheme.headlineMedium),
                 const SizedBox(height: 8),
                 Text(
-                  'Your level submission is under review by compliance team. This takes a short time during demo.',
+                  'Your level submission is under review by the compliance team. This usually takes a short time.',
                   style: theme.textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),

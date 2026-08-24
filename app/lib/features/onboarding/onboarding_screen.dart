@@ -21,7 +21,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardingPageData(
       title: 'Secure Digital Vault',
       subtitle:
-          'Your simulated multi-currency wallet is backed by an atomic double-entry ledger for institutional compliance.',
+          'Your multi-currency wallet is backed by an atomic double-entry ledger for institutional compliance.',
       icon: Icons.shield_outlined,
       badgeText: 'SECURITY FIRST',
       accentColor: AppColors.secondaryBlue,
@@ -182,7 +182,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Three things to know before you start moving funds in the demo environment.',
+                    'Three things to know before you start moving funds.',
                     style: AppTypography.textTheme.bodyLarge?.copyWith(
                       color: AppColors.white.withValues(alpha: 0.72),
                     ),
@@ -193,7 +193,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     runSpacing: 10,
                     children: const [
                       _TrustChip(icon: Icons.verified_user_outlined, label: '256-bit encryption'),
-                      _TrustChip(icon: Icons.account_balance_outlined, label: 'Licensed demo'),
+                      _TrustChip(icon: Icons.account_balance_outlined, label: 'Licensed'),
                       _TrustChip(icon: Icons.speed_outlined, label: 'Instant transfers'),
                     ],
                   ),
@@ -237,7 +237,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Row(
           children: [
             Text(
-              '© ${DateTime.now().year} TrustVault · Demo environment',
+              '© ${DateTime.now().year} TrustVault',
               style: AppTypography.textTheme.bodySmall?.copyWith(
                 color: AppColors.white.withValues(alpha: 0.4),
               ),

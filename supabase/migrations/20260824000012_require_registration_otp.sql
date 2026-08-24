@@ -1,65 +1,6 @@
--- Fix hosted Supabase auth + registration issues.
--- Run once in Supabase Dashboard → SQL Editor (project xrumgoeuzufxidxwwusm).
---
--- Resolves:
---   • Login 500 "Database error querying schema" (NULL auth token columns, missing identities)
---   • Registration "column kyc_level does not exist" (outdated complete_registration from setup script)
+-- Require a real registration OTP; drop get_demo_otp RPC.
 
--- ---------------------------------------------------------------------------
--- 1. Optional column used by the Flutter app
--- ---------------------------------------------------------------------------
-
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS kyc_level INTEGER NOT NULL DEFAULT 0;
-
--- ---------------------------------------------------------------------------
--- 2. GoTrue requires non-NULL string token columns on auth.users
--- ---------------------------------------------------------------------------
-
-UPDATE auth.users SET confirmation_token = '' WHERE confirmation_token IS NULL;
-UPDATE auth.users SET recovery_token = '' WHERE recovery_token IS NULL;
-UPDATE auth.users SET email_change = '' WHERE email_change IS NULL;
-UPDATE auth.users SET email_change_token_new = '' WHERE email_change_token_new IS NULL;
-
--- ---------------------------------------------------------------------------
--- 3. Email/password sign-in requires auth.identities rows
--- ---------------------------------------------------------------------------
-
-INSERT INTO auth.identities (
-  id,
-  user_id,
-  identity_data,
-  provider,
-  provider_id,
-  last_sign_in_at,
-  created_at,
-  updated_at
-)
-SELECT
-  gen_random_uuid(),
-  u.id,
-  jsonb_build_object(
-    'sub', u.id::text,
-    'email', u.email,
-    'email_verified', u.email_confirmed_at IS NOT NULL,
-    'phone_verified', false
-  ),
-  'email',
-  u.id::text,
-  COALESCE(u.last_sign_in_at, u.created_at, NOW()),
-  COALESCE(u.created_at, NOW()),
-  COALESCE(u.updated_at, NOW())
-FROM auth.users u
-WHERE u.email IS NOT NULL
-  AND NOT EXISTS (
-    SELECT 1
-    FROM auth.identities i
-    WHERE i.user_id = u.id AND i.provider = 'email'
-  );
-
--- ---------------------------------------------------------------------------
--- 4. Restore canonical complete_registration (migration version)
--- ---------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.get_demo_otp(TEXT) CASCADE;
 
 DROP FUNCTION IF EXISTS public.complete_registration(TEXT, TEXT, TEXT, TEXT, TEXT) CASCADE;
 

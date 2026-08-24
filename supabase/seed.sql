@@ -1,5 +1,5 @@
--- TrustVault Phase 4: Production Demo Narrative Seed Script
--- Demo auth users are created in seed_auth.sql; this adds ledger data and queues.
+-- TrustVault seed: sample ledger data and queues.
+-- Auth users are created in seed_auth.sql.
 
 DO $$
 DECLARE
@@ -76,7 +76,7 @@ BEGIN
   IF v_alice_id IS NOT NULL AND v_alice_acc IS NOT NULL THEN
     IF NOT EXISTS (SELECT 1 FROM public.transactions WHERE from_account_id = v_alice_acc AND type = 'withdrawal' AND status = 'pending') THEN
       INSERT INTO public.transactions (type, from_account_id, to_account_id, amount, status, initiated_by, note)
-      VALUES ('withdrawal', v_alice_acc, v_treasury_id, 20000, 'pending', v_alice_id, 'Demo withdrawal request')
+      VALUES ('withdrawal', v_alice_acc, v_treasury_id, 20000, 'pending', v_alice_id, 'Withdrawal request')
       RETURNING id INTO v_tx2_id;
     END IF;
 
@@ -94,5 +94,5 @@ BEGIN
     END IF;
   END IF;
 
-  RAISE NOTICE 'TrustVault demo narrative seed successfully applied.';
+  RAISE NOTICE 'TrustVault seed successfully applied.';
 END $$;

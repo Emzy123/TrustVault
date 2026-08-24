@@ -1,4 +1,4 @@
--- Demo auth users (Password: Password123!)
+-- Seed auth users (Password: Password123!)
 -- Runs after migrations, before seed.sql narrative data.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;

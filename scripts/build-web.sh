@@ -23,7 +23,7 @@ fi
 
 LOCAL_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
 if [[ "$SUPABASE_ANON_KEY" == "$LOCAL_ANON_KEY" ]]; then
-  echo "ERROR: SUPABASE_ANON_KEY is the local Supabase demo key."
+  echo "ERROR: SUPABASE_ANON_KEY is the local Supabase anon key."
   echo "Use the anon public key from Supabase Dashboard → Project Settings → API for your hosted project."
   exit 1
 fi

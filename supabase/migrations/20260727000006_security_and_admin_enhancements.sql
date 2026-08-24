@@ -42,7 +42,7 @@ DECLARE
   v_next_acc TEXT;
   v_invite public.admin_invitations%ROWTYPE;
 BEGIN
-  -- Demo accounts only; never trust client-supplied role metadata
+  -- Seed accounts only; never trust client-supplied role metadata
   IF NEW.email = 'admin@trustvault.demo' THEN
     v_role := 'admin';
   ELSIF NEW.email = 'superadmin@trustvault.demo' THEN

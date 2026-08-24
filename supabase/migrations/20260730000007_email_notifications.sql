@@ -319,7 +319,7 @@ REVOKE ALL ON FUNCTION public.complete_registration(TEXT, TEXT, TEXT, TEXT, TEXT
 GRANT EXECUTE ON FUNCTION public.complete_registration(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- Post-registration emails for auth.signUp users (non-OTP path / demo accounts)
+-- Post-registration emails for auth.signUp users (non-OTP path / seed accounts)
 -- ---------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.send_post_signup_emails()

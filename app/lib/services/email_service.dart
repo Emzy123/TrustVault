@@ -51,23 +51,12 @@ class EmailService {
     } on PostgrestException catch (error) {
       if (!_shouldFallbackToAuthSignUp(error)) rethrow;
 
-      await _verifyRegistrationOtpOrThrow(cleanEmail, cleanOtp);
       return _signUpAndSignIn(
         email: cleanEmail,
         password: password,
         fullName: fullName.trim(),
         phone: phone.trim(),
       );
-    }
-  }
-
-  Future<void> _verifyRegistrationOtpOrThrow(String email, String otp) async {
-    const demoCodes = {'123456', '000000', '111111'};
-    if (demoCodes.contains(otp)) return;
-
-    final expected = await getDemoOtp(email);
-    if (expected == null || expected.isEmpty || expected != otp) {
-      throw const AuthException('Invalid verification code');
     }
   }
 
@@ -132,18 +121,6 @@ class EmailService {
   /// Resends registration OTP (same as initial request).
   Future<void> resendRegistrationOtp(String email) =>
       requestRegistrationOtp(email);
-
-  /// Retrieves generated OTP code directly for demo mode if Brevo email delivery is unavailable.
-  Future<String?> getDemoOtp(String email) async {
-    try {
-      final res = await _client.rpc<String?>(
-        'get_demo_otp',
-        params: {'p_email': email.trim()},
-      );
-      if (res != null && res.isNotEmpty) return res;
-    } catch (_) {}
-    return '123456';
-  }
 
   Future<void> _dispatchEmail(String outboxId) async {
     try {

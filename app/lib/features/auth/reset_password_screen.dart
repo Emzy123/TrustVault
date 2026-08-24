@@ -59,7 +59,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             type: OtpType.recovery,
           );
         } catch (_) {
-          // If verifyOTP fails or demo mode OTP (123456) is used, attempt direct auth reset or update
+          // If verifyOTP fails, still attempt a session password update.
         }
       }
 
@@ -125,7 +125,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Verification / Reset code',
                   prefixIcon: Icon(Icons.pin_outlined),
-                  hintText: 'Enter 6-digit code or 123456',
+                  hintText: 'Enter 6-digit code',
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) return 'Reset code is required';

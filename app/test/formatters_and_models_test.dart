@@ -32,7 +32,7 @@ void main() {
       final json = {
         'id': 'p-123',
         'full_name': 'Jane Doe',
-        'email': 'jane@trustvault.demo',
+        'email': 'jane@example.com',
         'phone': '+2348012345678',
         'role': 'admin',
         'account_status': 'active',
@@ -42,7 +42,7 @@ void main() {
       final profile = Profile.fromJson(json);
       expect(profile.id, equals('p-123'));
       expect(profile.fullName, equals('Jane Doe'));
-      expect(profile.email, equals('jane@trustvault.demo'));
+      expect(profile.email, equals('jane@example.com'));
       expect(profile.role, equals(UserRole.admin));
       expect(profile.accountStatus, equals(AccountStatus.active));
       expect(profile.kycStatus, equals(KycStatus.approved));

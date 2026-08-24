@@ -97,25 +97,6 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
     }
   }
 
-  Future<void> _fetchDemoCode() async {
-    setState(() => _errorMessage = null);
-    try {
-      final code = await EmailService(Supabase.instance.client).getDemoOtp(widget.email);
-      if (code != null && code.isNotEmpty) {
-        setState(() => _otpController.text = code);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Demo Mode: Verification code [$code] autofilled.')),
-          );
-        }
-      } else {
-        setState(() => _errorMessage = 'No active demo code found. Click "Resend code".');
-      }
-    } catch (_) {
-      setState(() => _errorMessage = 'Could not fetch demo verification code.');
-    }
-  }
-
   void _showWelcomeDialog() {
     showDialog(
       context: context,
@@ -208,12 +189,6 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
             ],
             onEditingComplete: _verify,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Demo Mode: Click "Get Code" or use 123456',
-            style: AppTypography.textTheme.bodySmall?.copyWith(fontSize: 11),
-            textAlign: TextAlign.center,
-          ),
           if (_errorMessage != null) ...[
             const SizedBox(height: 16),
             ErrorBanner(message: _errorMessage!),
@@ -230,19 +205,12 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
                 : const Text('Verify & create account'),
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                onPressed: _isResending ? null : _resend,
-                child: Text(_isResending ? 'Sending…' : 'Resend code'),
-              ),
-              TextButton.icon(
-                icon: const Icon(Icons.key_outlined, size: 16),
-                label: const Text('Get Code (Demo)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                onPressed: _fetchDemoCode,
-              ),
-            ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _isResending ? null : _resend,
+              child: Text(_isResending ? 'Sending…' : 'Resend code'),
+            ),
           ),
         ],
       ),

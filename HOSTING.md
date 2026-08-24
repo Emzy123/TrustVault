@@ -153,13 +153,13 @@ Build locally with `./scripts/build-web.sh`, publish `app/build/web`.
 
 ---
 
-## 6. Demo accounts (after seed)
+## 6. Seed accounts (after seed)
 
 Password: **`Password123!`**
 
-- `superadmin@trustvault.demo` — full control  
-- `admin@trustvault.demo` — ops queues  
-- `alice@trustvault.demo` — funded user  
+- Super admin — full control  
+- Admin — ops queues  
+- Funded user — sample wallet
 
 ---
 
@@ -178,7 +178,7 @@ Password: **`Password123!`**
 | Issue | Fix |
 |--------|-----|
 | App hits wrong API | Rebuild with correct `--dart-define=SUPABASE_URL=...` (never use local `127.0.0.1:54321` for production) |
-| Login 500 / database error | Run `supabase/patch_fix_hosted_auth.sql` in Supabase SQL Editor (fixes demo users + registration RPC) |
+| Login 500 / database error | Run `supabase/patch_fix_hosted_auth.sql` in Supabase SQL Editor (fixes seed users + registration RPC) |
 | KYC fails / missing function | Run `supabase/patch_kyc_level_rpcs.sql` in Supabase SQL Editor |
 | Transfer / withdrawal fails | Run `supabase/patch_transfer_and_wallet_rpcs.sql` in Supabase SQL Editor |
 | Balance cannot be modified directly | Run `supabase/patch_fix_post_ledger_balance.sql` in Supabase SQL Editor |

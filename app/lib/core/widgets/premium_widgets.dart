@@ -161,13 +161,13 @@ class _HeroPanel extends StatelessWidget {
                     runSpacing: 12,
                     children: const [
                       _TrustBadge(icon: Icons.verified_user_outlined, label: '256-bit encryption'),
-                      _TrustBadge(icon: Icons.account_balance_outlined, label: 'Licensed demo'),
+                      _TrustBadge(icon: Icons.account_balance_outlined, label: 'Licensed'),
                       _TrustBadge(icon: Icons.speed_outlined, label: 'Instant transfers'),
                     ],
                   ),
                   const Spacer(),
                   Text(
-                    '© ${DateTime.now().year} TrustVault · Demo environment',
+                    '© ${DateTime.now().year} TrustVault',
                     style: AppTypography.textTheme.bodySmall?.copyWith(
                       color: AppColors.white.withValues(alpha: 0.45),
                     ),
