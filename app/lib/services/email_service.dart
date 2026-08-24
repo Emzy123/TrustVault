@@ -122,6 +122,18 @@ class EmailService {
   Future<void> resendRegistrationOtp(String email) =>
       requestRegistrationOtp(email);
 
+  /// Returns the latest generated registration OTP (used when email delivery fails).
+  Future<String?> getRegistrationOtp(String email) async {
+    try {
+      final res = await _client.rpc<String?>(
+        'get_registration_otp',
+        params: {'p_email': email.trim()},
+      );
+      if (res != null && res.isNotEmpty) return res;
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> _dispatchEmail(String outboxId) async {
     try {
       await _client.functions.invoke(

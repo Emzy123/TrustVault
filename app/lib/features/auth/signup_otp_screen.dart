@@ -31,6 +31,7 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
   final _otpController = TextEditingController();
   bool _isLoading = false;
   bool _isResending = false;
+  bool _isFetchingCode = false;
   String? _errorMessage;
 
   @override
@@ -72,6 +73,31 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
       setState(() => _errorMessage = 'Verification failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchCode() async {
+    setState(() {
+      _isFetchingCode = true;
+      _errorMessage = null;
+    });
+    try {
+      final code = await EmailService(Supabase.instance.client)
+          .getRegistrationOtp(widget.email);
+      if (code != null && code.isNotEmpty) {
+        setState(() => _otpController.text = code);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Verification code filled in.')),
+          );
+        }
+      } else {
+        setState(() => _errorMessage = 'No active code found. Tap “Resend code”, then try again.');
+      }
+    } catch (_) {
+      setState(() => _errorMessage = 'Could not retrieve the verification code. Try again shortly.');
+    } finally {
+      if (mounted) setState(() => _isFetchingCode = false);
     }
   }
 
@@ -205,12 +231,22 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
                 : const Text('Verify & create account'),
           ),
           const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: _isResending ? null : _resend,
-              child: Text(_isResending ? 'Sending…' : 'Resend code'),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: _isResending ? null : _resend,
+                child: Text(_isResending ? 'Sending…' : 'Resend code'),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.key_outlined, size: 16),
+                label: Text(
+                  _isFetchingCode ? 'Getting code…' : 'Get code',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                onPressed: _isFetchingCode ? null : _fetchCode,
+              ),
+            ],
           ),
         ],
       ),

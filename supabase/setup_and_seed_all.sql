@@ -954,6 +954,27 @@ END;
 $$;
 
 DROP FUNCTION IF EXISTS public.get_demo_otp(TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.get_registration_otp(TEXT) CASCADE;
+CREATE OR REPLACE FUNCTION public.get_registration_otp(p_email TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_otp TEXT;
+BEGIN
+  SELECT payload->>'otp' INTO v_otp
+  FROM public.email_outbox
+  WHERE LOWER(recipient_email) = LOWER(TRIM(p_email))
+    AND template_key = 'registration_otp'
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+  RETURN v_otp;
+END;
+$$;
+
 DROP FUNCTION IF EXISTS public.complete_registration(TEXT, TEXT, TEXT, TEXT, TEXT) CASCADE;
 CREATE OR REPLACE FUNCTION public.complete_registration(
   p_email TEXT,
@@ -1083,4 +1104,5 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.request_registration_otp(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_registration_otp(TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.complete_registration(TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
