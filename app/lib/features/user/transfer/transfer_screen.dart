@@ -207,7 +207,13 @@ class _TransferScreenState extends State<TransferScreen> {
                           final amount = double.tryParse(v?.trim() ?? '');
                           if (amount == null || amount <= 0) return 'Enter a valid amount';
                           if (amount > widget.availableBalance) return 'Insufficient balance';
-                          if (amount > 5000000) return 'Maximum transfer is \$5,000,000';
+                          final limit = widget.profile.dailyTransferLimit;
+                          if (limit <= 0) {
+                            return 'Complete Level 1 verification to unlock transfers';
+                          }
+                          if (amount > limit) {
+                            return 'Your daily limit is ${widget.profile.formattedDailyLimit}';
+                          }
                           return null;
                         },
                       ),

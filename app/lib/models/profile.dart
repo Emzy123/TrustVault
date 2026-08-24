@@ -94,44 +94,63 @@ class Profile {
   final UserRole role;
   final AccountStatus accountStatus;
   final KycStatus kycStatus;
+
+  /// 0 = newly registered (no verification yet). Levels 1–3 map to Tiers 1–3.
   final int kycLevel;
 
+  bool get hasCompletedAnyKyc => kycLevel >= 1;
+
+  /// Display badge: unverified users are not "Level 0" — they simply have no tier yet.
   String get levelBadgeTitle {
     switch (kycLevel) {
       case 1:
-        return 'Level 1 (Tier 2)';
+        return 'Level 1 · Tier 1';
       case 2:
-        return 'Level 2 (Tier 3)';
+        return 'Level 2 · Tier 2';
       case 3:
-        return 'Level 3 (Tier 4 / Unlimited)';
+        return 'Level 3 · Tier 3';
       default:
-        return 'Level 0 (Tier 1)';
+        return 'Unverified';
     }
   }
 
+  /// Realistic consumer-wallet daily transfer limits (USD).
   double get dailyTransferLimit {
     switch (kycLevel) {
       case 1:
-        return 500000;
+        return 5000;
       case 2:
-        return 5000000;
+        return 20000;
       case 3:
-        return 50000000;
+        return 100000;
       default:
-        return 50000;
+        return 0;
     }
   }
 
   String get formattedDailyLimit {
     switch (kycLevel) {
       case 1:
-        return '\$500,000';
+        return '\$5,000';
       case 2:
-        return '\$5,000,000';
+        return '\$20,000';
       case 3:
-        return 'Unlimited (\$50M)';
+        return '\$100,000';
       default:
-        return '\$50,000';
+        return '\$0';
+    }
+  }
+
+  String get tierLimitDescription {
+    switch (kycLevel) {
+      case 1:
+        return 'Government ID verified · \$5,000 daily transfers';
+      case 2:
+        return 'Face match verified · \$20,000 daily transfers';
+      case 3:
+        return 'Address verified · \$100,000 daily transfers';
+      default:
+        return 'Complete identity verification to unlock transfers';
     }
   }
 

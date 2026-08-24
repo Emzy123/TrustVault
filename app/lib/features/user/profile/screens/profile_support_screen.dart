@@ -35,7 +35,7 @@ class _ProfileSupportScreenState extends State<ProfileSupportScreen> {
     _FaqItem(
       question: 'How do I upgrade my account daily limits?',
       answer:
-          'Submitting government-issued ID (National ID, Passport, or Driver License) upgrades your wallet to Tier 2 with a \$1,000,000 daily limit.',
+          'Complete Level 1 (government ID) for a \$5,000 daily limit, Level 2 (face match) for \$20,000, and Level 3 (proof of address) for \$100,000.',
     ),
   ];
 

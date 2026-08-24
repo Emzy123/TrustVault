@@ -409,11 +409,20 @@ class _AccountLevelCard extends StatelessWidget {
               TextButton(
                 onPressed: () => context.go('/app/kyc'),
                 child: Text(
-                  level >= 3 ? 'Max level' : 'Upgrade',
+                  level >= 3
+                      ? 'Max level'
+                      : level == 0
+                          ? 'Verify'
+                          : 'Upgrade',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            profile.tierLimitDescription,
+            style: AppTypography.textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           Row(
@@ -430,7 +439,7 @@ class _AccountLevelCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
-              value: (level / 3.0).clamp(0.08, 1.0),
+              value: level == 0 ? 0.0 : (level / 3.0).clamp(0.12, 1.0),
               backgroundColor: AppColors.borderGrey,
               color: AppColors.accentGold,
               minHeight: 8,

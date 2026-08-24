@@ -145,7 +145,7 @@ class _FundingRequestScreenState extends State<FundingRequestScreen> {
                         validator: (v) {
                           final amount = double.tryParse(v?.trim() ?? '');
                           if (amount == null || amount <= 0) return 'Enter a valid amount';
-                          if (amount > 10000000) return 'Maximum request is \$10,000,000';
+                          if (amount > 100000) return 'Maximum request is \$100,000';
                           return null;
                         },
                       ),
