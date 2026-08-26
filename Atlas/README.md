@@ -46,6 +46,7 @@ supabase db push
 # optional: apply seed / patches as needed for your hosted project
 ```
 
+If **Get code** on verify-email says “No active code found”, Vercel env is not enough — the Atlas Supabase project needs the OTP RPCs. Run `supabase/patch_registration_otp_get_code.sql` in the Supabase SQL Editor, then tap **Resend code** and **Get code** again.
 ## Roles
 
 | Path | Role |

@@ -92,8 +92,22 @@ class _SignUpOtpScreenState extends State<SignUpOtpScreen> {
           );
         }
       } else {
-        setState(() => _errorMessage = 'No active code found. Tap “Resend code”, then try again.');
+        setState(
+          () => _errorMessage =
+              'No active code found. Tap “Resend code”, wait a moment, then try Get code again.',
+        );
       }
+    } on PostgrestException catch (error) {
+      final message = error.message;
+      setState(() {
+        if (message.contains('Could not find the function') ||
+            message.contains('get_registration_otp')) {
+          _errorMessage =
+              'OTP lookup is not set up on the server. Run Atlas/supabase/patch_registration_otp_get_code.sql in the Supabase SQL Editor, then tap Resend code.';
+        } else {
+          _errorMessage = message;
+        }
+      });
     } catch (_) {
       setState(() => _errorMessage = 'Could not retrieve the verification code. Try again shortly.');
     } finally {
