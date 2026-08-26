@@ -1,11 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_decorations.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/onboarding/onboarding_prefs.dart';
+import '../../core/theme/app_colors.dart';
 
+/// Post-splash start screen — structure matched to the Atlas-style welcome mock.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -13,460 +15,447 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with TickerProviderStateMixin {
+  late final AnimationController _enterController;
+  late final AnimationController _floatController;
 
-  final List<_OnboardingPageData> _pages = const [
-    _OnboardingPageData(
-      title: 'Secure Digital Vault',
-      subtitle:
-          'Your multi-currency wallet is backed by an atomic double-entry ledger for institutional compliance.',
-      icon: Icons.shield_outlined,
-      badgeText: 'SECURITY FIRST',
-      accentColor: AppColors.secondaryBlue,
-    ),
-    _OnboardingPageData(
-      title: 'Instant Peer Transfers',
-      subtitle:
-          'Transfer funds between TrustVault accounts instantaneously with full atomic ledger postings.',
-      icon: Icons.swap_horiz_rounded,
-      badgeText: 'ZERO LATENCY',
-      accentColor: AppColors.accentGold,
-    ),
-    _OnboardingPageData(
-      title: 'Honest Status & Oversight',
-      subtitle:
-          'Every transaction status is genuine. Track funding, transfers, and withdrawal reviews with complete transparency.',
-      icon: Icons.verified_user_outlined,
-      badgeText: 'TRANSPARENT FLOWS',
-      accentColor: AppColors.success,
-    ),
-  ];
+  late final Animation<double> _collageFade;
+  late final Animation<Offset> _collageSlide;
+  late final Animation<double> _copyFade;
+  late final Animation<Offset> _copySlide;
+  late final Animation<double> _ctaFade;
+  late final Animation<Offset> _ctaSlide;
+
+  static const _loginTeal = Color(0xFF0F5C5B);
+  static const _createPeach = Color(0xFFF3C9B5);
+
+  @override
+  void initState() {
+    super.initState();
+    _enterController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 980),
+    );
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4200),
+    )..repeat(reverse: true);
+
+    _collageFade = CurvedAnimation(
+      parent: _enterController,
+      curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
+    );
+    _collageSlide = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _enterController,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
+    ));
+
+    _copyFade = CurvedAnimation(
+      parent: _enterController,
+      curve: const Interval(0.28, 0.7, curve: Curves.easeOut),
+    );
+    _copySlide = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _enterController,
+      curve: const Interval(0.28, 0.75, curve: Curves.easeOutCubic),
+    ));
+
+    _ctaFade = CurvedAnimation(
+      parent: _enterController,
+      curve: const Interval(0.5, 1.0, curve: Curves.easeOut),
+    );
+    _ctaSlide = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _enterController,
+      curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
+    ));
+
+    _enterController.forward();
+  }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _enterController.dispose();
+    _floatController.dispose();
     super.dispose();
   }
 
-  Future<void> _finishOnboarding() async {
+  Future<void> _goToLogin() async {
     await OnboardingPrefs.markCompleted();
     if (mounted) context.go('/');
   }
 
-  void _onNext() {
-    if (_currentPage < _pages.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 420),
-        curve: Curves.easeOutCubic,
-      );
-    } else {
-      _finishOnboarding();
-    }
+  Future<void> _goToSignUp() async {
+    await OnboardingPrefs.markCompleted();
+    if (mounted) context.go('/signup');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 900;
+    final size = MediaQuery.sizeOf(context);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final isWide = size.width >= 720;
+    final contentWidth = isWide ? 420.0 : math.min(size.width, 440.0);
 
-          return Container(
-            decoration: const BoxDecoration(gradient: AppDecorations.authPanelGradient),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -100,
-                  right: -80,
-                  child: _GlowOrb(size: 280, color: AppColors.white.withValues(alpha: 0.04)),
-                ),
-                Positioned(
-                  bottom: -60,
-                  left: -50,
-                  child: _GlowOrb(size: 220, color: AppColors.accentGold.withValues(alpha: 0.08)),
-                ),
-                Positioned(
-                  top: constraints.maxHeight * 0.35,
-                  left: -30,
-                  child: _GlowOrb(size: 120, color: AppColors.secondaryBlue.withValues(alpha: 0.12)),
-                ),
-                SafeArea(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: isWide ? 920 : 540),
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: contentWidth),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, 12, 24, 16 + bottomInset),
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: 11,
+                    child: FadeTransition(
+                      opacity: _collageFade,
+                      child: SlideTransition(
+                        position: _collageSlide,
+                        child: AnimatedBuilder(
+                          animation: _floatController,
+                          builder: (context, child) {
+                            final t = _floatController.value;
+                            return Transform.translate(
+                              offset: Offset(0, math.sin(t * math.pi) * 4),
+                              child: child,
+                            );
+                          },
+                          child: const _WelcomeCollage(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  FadeTransition(
+                    opacity: _copyFade,
+                    child: SlideTransition(
+                      position: _copySlide,
                       child: Column(
                         children: [
-                          _buildHeader(isWide),
-                          Expanded(
-                            child: isWide
-                                ? _buildWideCarousel()
-                                : _buildMobileCarousel(),
+                          const _PageIndicators(activeIndex: 0, count: 4),
+                          const SizedBox(height: 22),
+                          Text(
+                            'Welcome to TrustVault!',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: isWide ? 28 : 26,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textDark,
+                              height: 1.2,
+                              letterSpacing: -0.4,
+                            ),
                           ),
-                          _buildFooter(isWide),
+                          const SizedBox(height: 10),
+                          Text(
+                            'The vault that pays you more — literally.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textDark,
+                              height: 1.45,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildHeader(bool isWide) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(isWide ? 40 : 24, 16, isWide ? 40 : 24, 8),
-      child: Row(
-        children: [
-          Image.asset('assets/images/logo.png', height: isWide ? 36 : 32),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'TrustVault',
-                style: AppTypography.textTheme.titleMedium?.copyWith(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                'Onboarding',
-                style: AppTypography.overline.copyWith(color: AppColors.white.withValues(alpha: 0.5)),
-              ),
-            ],
-          ),
-          const Spacer(),
-          TextButton(
-            onPressed: _finishOnboarding,
-            style: TextButton.styleFrom(foregroundColor: AppColors.white.withValues(alpha: 0.75)),
-            child: const Text('Skip tour'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileCarousel() {
-    return PageView.builder(
-      controller: _pageController,
-      onPageChanged: (index) => setState(() => _currentPage = index),
-      itemCount: _pages.length,
-      itemBuilder: (context, index) => _OnboardingSlide(page: _pages[index], step: index + 1, total: _pages.length),
-    );
-  }
-
-  Widget _buildWideCarousel() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Row(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome to\nyour digital vault.',
-                    style: AppTypography.textTheme.displayMedium?.copyWith(
-                      color: AppColors.white,
-                      height: 1.15,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Three things to know before you start moving funds.',
-                    style: AppTypography.textTheme.bodyLarge?.copyWith(
-                      color: AppColors.white.withValues(alpha: 0.72),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: const [
-                      _TrustChip(icon: Icons.verified_user_outlined, label: '256-bit encryption'),
-                      _TrustChip(icon: Icons.account_balance_outlined, label: 'Licensed'),
-                      _TrustChip(icon: Icons.speed_outlined, label: 'Instant transfers'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              decoration: AppDecorations.glassCard(tint: AppColors.white),
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 20),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) => setState(() => _currentPage = index),
-                      itemCount: _pages.length,
-                      itemBuilder: (context, index) => _OnboardingSlide(
-                        page: _pages[index],
-                        step: index + 1,
-                        total: _pages.length,
-                        onDarkBackground: false,
+                  const Spacer(flex: 1),
+                  FadeTransition(
+                    opacity: _ctaFade,
+                    child: SlideTransition(
+                      position: _ctaSlide,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            height: 54,
+                            child: FilledButton(
+                              onPressed: _goToLogin,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _loginTeal,
+                                foregroundColor: AppColors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                textStyle: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: const Text('Login'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 54,
+                            child: FilledButton(
+                              onPressed: _goToSignUp,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _createPeach,
+                                foregroundColor: AppColors.textDark,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                textStyle: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: const Text('Create an Account'),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  _buildPageIndicators(onDarkBackground: false),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildFooter(bool isWide) {
-    if (isWide) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(40, 8, 40, 28),
-        child: Row(
+class _PageIndicators extends StatelessWidget {
+  const _PageIndicators({required this.activeIndex, required this.count});
+
+  final int activeIndex;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        final active = index == activeIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: active ? 22 : 14,
+          height: 4,
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF0F5C5B) : const Color(0xFFD9D9D9),
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+/// Staggered photo-tile collage with TrustVault logo card (Atlas-style layout).
+class _WelcomeCollage extends StatelessWidget {
+  const _WelcomeCollage();
+
+  static const _photos = <String>[
+    // Lifestyle / people tiles — same structural role as the sample collage.
+    'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1551836022-d5d32f7f6c70?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=600&q=80',
+    'https://images.unsplash.com/photo-1556742111-a301076d9d18?auto=format&fit=crop&w=600&q=80',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        final tileRadius = BorderRadius.circular(18);
+
+        return Stack(
+          clipBehavior: Clip.none,
           children: [
-            Text(
-              '© ${DateTime.now().year} TrustVault',
-              style: AppTypography.textTheme.bodySmall?.copyWith(
-                color: AppColors.white.withValues(alpha: 0.4),
+            Positioned(
+              left: 0,
+              top: h * 0.02,
+              width: w * 0.30,
+              height: h * 0.28,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                imageUrl: _photos[0],
+                fallback: const Color(0xFF1B3A4B),
               ),
             ),
-            const Spacer(),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accentGold,
-                foregroundColor: AppColors.primaryNavy,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            Positioned(
+              left: w * 0.34,
+              top: 0,
+              width: w * 0.32,
+              height: h * 0.34,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                imageUrl: _photos[1],
+                fallback: const Color(0xFFE8C872),
               ),
-              onPressed: _onNext,
-              child: Text(
-                _currentPage == _pages.length - 1 ? 'Continue to sign in' : 'Continue',
-                style: AppTypography.textTheme.labelLarge?.copyWith(color: AppColors.primaryNavy),
+            ),
+            Positioned(
+              right: 0,
+              top: h * 0.04,
+              width: w * 0.30,
+              height: h * 0.30,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                imageUrl: _photos[2],
+                fallback: const Color(0xFF2F5C9E),
+              ),
+            ),
+            Positioned(
+              left: w * 0.04,
+              top: h * 0.34,
+              width: w * 0.42,
+              height: h * 0.36,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0B1220), Color(0xFF1B2A4A)],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: math.min(h * 0.16, 72),
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'TrustVault',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: w * 0.02,
+              top: h * 0.36,
+              width: w * 0.46,
+              height: h * 0.34,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                imageUrl: _photos[3],
+                fallback: const Color(0xFFF3C9B5),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              bottom: h * 0.02,
+              width: w * 0.36,
+              height: h * 0.24,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                imageUrl: _photos[4],
+                fallback: const Color(0xFF134E4A),
+              ),
+            ),
+            Positioned(
+              left: w * 0.40,
+              bottom: 0,
+              width: w * 0.28,
+              height: h * 0.26,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                imageUrl: _photos[5],
+                fallback: const Color(0xFFE2E8F0),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              bottom: h * 0.04,
+              width: w * 0.28,
+              height: h * 0.24,
+              child: _CollageTile(
+                borderRadius: tileRadius,
+                imageUrl: _photos[6],
+                fallback: const Color(0xFF0F172A),
               ),
             ),
           ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-      child: Column(
-        children: [
-          _buildPageIndicators(onDarkBackground: true),
-          const SizedBox(height: 28),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.accentGold,
-              foregroundColor: AppColors.primaryNavy,
-              minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            onPressed: _onNext,
-            child: Text(
-              _currentPage == _pages.length - 1 ? 'Continue to sign in' : 'Continue',
-              style: AppTypography.textTheme.labelLarge?.copyWith(color: AppColors.primaryNavy),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPageIndicators({required bool onDarkBackground}) {
-    final inactive = onDarkBackground
-        ? AppColors.white.withValues(alpha: 0.25)
-        : AppColors.borderGrey;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        _pages.length,
-        (index) => AnimatedContainer(
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: _currentPage == index ? 28 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: _currentPage == index ? AppColors.accentGold : inactive,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: _currentPage == index
-                ? [
-                    BoxShadow(
-                      color: AppColors.accentGold.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-class _OnboardingSlide extends StatelessWidget {
-  const _OnboardingSlide({
-    required this.page,
-    required this.step,
-    required this.total,
-    this.onDarkBackground = true,
+class _CollageTile extends StatelessWidget {
+  const _CollageTile({
+    required this.borderRadius,
+    this.imageUrl,
+    this.gradient,
+    this.fallback,
+    this.child,
   });
 
-  final _OnboardingPageData page;
-  final int step;
-  final int total;
-  final bool onDarkBackground;
+  final BorderRadius borderRadius;
+  final String? imageUrl;
+  final Gradient? gradient;
+  final Color? fallback;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
-    final titleColor = onDarkBackground ? AppColors.white : AppColors.textDark;
-    final bodyColor = onDarkBackground ? AppColors.white.withValues(alpha: 0.78) : AppColors.textMuted;
-    final stepColor = onDarkBackground ? AppColors.white.withValues(alpha: 0.45) : AppColors.textMuted;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'STEP $step OF $total',
-            style: AppTypography.overline.copyWith(color: stepColor),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: page.accentColor.withValues(alpha: onDarkBackground ? 0.15 : 0.1),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: page.accentColor.withValues(alpha: 0.35)),
-            ),
-            child: Text(
-              page.badgeText,
-              style: AppTypography.overline.copyWith(
-                color: onDarkBackground ? AppColors.accentGoldLight : page.accentColor,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Container(
-            width: 128,
-            height: 128,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  page.accentColor.withValues(alpha: 0.25),
-                  page.accentColor.withValues(alpha: 0.05),
-                ],
-              ),
-              border: Border.all(color: page.accentColor.withValues(alpha: 0.3), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: page.accentColor.withValues(alpha: 0.2),
-                  blurRadius: 32,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Icon(page.icon, size: 56, color: onDarkBackground ? AppColors.accentGoldLight : page.accentColor),
-          ),
-          const SizedBox(height: 36),
-          Text(
-            page.title,
-            style: AppTypography.textTheme.headlineMedium?.copyWith(
-              color: titleColor,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 14),
-          Text(
-            page.subtitle,
-            style: AppTypography.textTheme.bodyMedium?.copyWith(color: bodyColor, height: 1.55),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-    );
-  }
-}
-
-class _TrustChip extends StatelessWidget {
-  const _TrustChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.white.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: AppColors.accentGoldLight),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: AppTypography.textTheme.bodySmall?.copyWith(
-              color: AppColors.white.withValues(alpha: 0.88),
-              fontWeight: FontWeight.w500,
-            ),
+        color: fallback ?? const Color(0xFFE2E8F0),
+        gradient: gradient,
+        borderRadius: borderRadius,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x140F172A),
+            blurRadius: 16,
+            offset: Offset(0, 8),
           ),
         ],
       ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: child ??
+            (imageUrl == null
+                ? const SizedBox.expand()
+                : Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => ColoredBox(
+                      color: fallback ?? const Color(0xFFE2E8F0),
+                    ),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return ColoredBox(
+                        color: fallback ?? const Color(0xFFE2E8F0),
+                      );
+                    },
+                  )),
+      ),
     );
   }
-}
-
-class _OnboardingPageData {
-  const _OnboardingPageData({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.badgeText,
-    required this.accentColor,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final String badgeText;
-  final Color accentColor;
 }

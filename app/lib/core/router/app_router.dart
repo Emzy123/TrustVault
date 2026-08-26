@@ -336,6 +336,8 @@ class AppRouter {
         final profile = await _profileService.fetchCurrentProfile();
         return profile?.role.homePath ?? '/app';
       }
+      final onboardingDone = await OnboardingPrefs.hasCompleted();
+      if (onboardingDone) return '/';
       return null;
     }
 
