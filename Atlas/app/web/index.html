@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Atlas — secure digital wallet">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Atlas">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png?v=2"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <title>Atlas</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #0f5c5b;
+      color: #fafaf8;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    #tv-loading {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 18px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    #tv-loading .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(255, 255, 255, 0.15);
+      border-top-color: #f3c9b5;
+      border-radius: 50%;
+      animation: tv-spin 0.9s linear infinite;
+    }
+
+    @keyframes tv-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #tv-error {
+      display: none;
+      min-height: 100%;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+
+    #tv-error .panel {
+      max-width: 520px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    #tv-error h1 {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+    }
+
+    #tv-error p {
+      margin: 0 0 20px;
+      line-height: 1.5;
+      color: rgba(248, 250, 252, 0.82);
+      font-size: 0.95rem;
+    }
+
+    #tv-error button {
+      background: #f3c9b5;
+      color: #111827;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div style="padding:24px;color:#fff;background:#0f172a;min-height:100vh;">
+      Atlas requires JavaScript. Please enable JavaScript in your browser settings.
+    </div>
+  </noscript>
+
+  <div id="tv-loading" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <div>
+      <strong>Loading Atlas…</strong><br>
+      <span id="tv-loading-hint" style="opacity:0.7;font-size:0.9rem;">Secure digital wallet</span>
+    </div>
+  </div>
+
+  <div id="tv-error" role="alert">
+    <div class="panel">
+      <h1>Could not load Atlas</h1>
+      <p id="tv-error-message"></p>
+      <button type="button" onclick="location.reload()">Reload page</button>
+    </div>
+  </div>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
