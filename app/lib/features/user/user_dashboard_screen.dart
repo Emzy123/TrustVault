@@ -15,6 +15,8 @@ import '../../models/wallet_account.dart';
 import '../../models/wallet_models.dart';
 import '../../services/wallet_service.dart';
 import '../shared/state_widgets.dart';
+import 'crypto/crypto_assets.dart';
+import 'crypto/crypto_widgets.dart';
 import 'history/transaction_history_screen.dart';
 
 class UserDashboardScreen extends StatefulWidget {
@@ -199,12 +201,115 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                       onTap: () => context.go('/app/withdraw'),
                     ),
                     QuickActionTile(
+                      label: 'Crypto',
+                      icon: Icons.currency_bitcoin_rounded,
+                      enabled: true,
+                      onTap: () => context.go('/app/crypto'),
+                    ),
+                    QuickActionTile(
                       label: 'Verify',
                       icon: Icons.verified_user_outlined,
                       enabled: true,
                       onTap: () => context.go('/app/kyc'),
                     ),
                   ],
+                ),
+                const SizedBox(height: 28),
+                SectionHeader(
+                  title: 'Crypto',
+                  actionLabel: 'Open',
+                  onAction: () => context.go('/app/crypto'),
+                ),
+                const SizedBox(height: 12),
+                PremiumCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Portfolio',
+                                  style: AppTypography.textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  formatCryptoFiat(CryptoCatalog.totalFiatNgn),
+                                  style: AppTypography.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          FilledButton.tonal(
+                            onPressed: () => context.go('/app/crypto/buy'),
+                            child: const Text('Buy'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final asset in CryptoCatalog.assets.take(3))
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: CryptoUi.tint(asset.color, 0.1),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: CryptoUi.tint(asset.color, 0.22)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CryptoAssetAvatar(asset: asset, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${asset.symbol} ${asset.balanceLabel}',
+                                    style: AppTypography.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => context.go('/app/crypto/deposit'),
+                              child: const Text('Deposit'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => context.go('/app/crypto/send'),
+                              child: const Text('Send'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => context.go('/app/crypto/withdraw'),
+                              child: const Text('Cash out'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
                 SectionHeader(
