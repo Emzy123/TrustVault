@@ -23,6 +23,11 @@ import '../../features/super_admin/super_admin_flags_screen.dart';
 import '../../features/super_admin/super_admin_shell.dart';
 import '../../features/super_admin/super_admin_users_screen.dart';
 import '../../features/super_admin/super_admin_withdrawals_screen.dart';
+import '../../features/user/crypto/crypto_buy_screen.dart';
+import '../../features/user/crypto/crypto_deposit_screen.dart';
+import '../../features/user/crypto/crypto_hub_screen.dart';
+import '../../features/user/crypto/crypto_send_screen.dart';
+import '../../features/user/crypto/crypto_withdraw_screen.dart';
 import '../../features/user/funding/funding_request_screen.dart';
 import '../../features/user/history/transaction_history_screen.dart';
 import '../../features/user/kyc/kyc_screens.dart';
@@ -32,6 +37,8 @@ import '../../features/user/profile/screens/profile_limits_screen.dart';
 import '../../features/user/profile/screens/profile_security_screen.dart';
 import '../../features/user/profile/screens/profile_statements_screen.dart';
 import '../../features/user/profile/screens/profile_support_screen.dart';
+import '../../features/user/settings/user_settings_screen.dart';
+import '../../features/user/showcase/feature_showcase_screen.dart';
 import '../../features/user/transfer/transfer_screen.dart';
 import '../../features/user/user_dashboard_screen.dart';
 import '../../features/user/user_shell.dart';
@@ -124,6 +131,58 @@ class AppRouter {
               },
             ),
             routes: [
+              GoRoute(
+                path: 'settings',
+                builder: (context, state) => const UserSettingsScreen(),
+              ),
+              GoRoute(
+                path: 'goals',
+                builder: (context, state) => const FeatureShowcaseScreen(
+                  title: 'Life Goals Lab',
+                  subtitle: 'Plan savings targets and milestone rewards.',
+                  icon: Icons.school_rounded,
+                  highlights: [
+                    'Education savings plans',
+                    'Retirement milestones',
+                    'Custom life-goal trackers',
+                  ],
+                ),
+              ),
+              GoRoute(
+                path: 'business',
+                builder: (context, state) => const FeatureShowcaseScreen(
+                  title: 'Businesses',
+                  subtitle: 'Tools for teams, payouts, and business banking.',
+                  icon: Icons.business_center_rounded,
+                  highlights: [
+                    'Business account overview',
+                    'Team payout workflows',
+                    'Merchant settlement insights',
+                  ],
+                ),
+              ),
+              GoRoute(
+                path: 'crypto',
+                builder: (context, state) => const CryptoHubScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'deposit',
+                    builder: (context, state) => const CryptoDepositScreen(),
+                  ),
+                  GoRoute(
+                    path: 'buy',
+                    builder: (context, state) => const CryptoBuyScreen(),
+                  ),
+                  GoRoute(
+                    path: 'send',
+                    builder: (context, state) => const CryptoSendScreen(),
+                  ),
+                  GoRoute(
+                    path: 'withdraw',
+                    builder: (context, state) => const CryptoWithdrawScreen(),
+                  ),
+                ],
+              ),
               GoRoute(
                 path: 'kyc/pending',
                 builder: (context, state) => UserWalletScope(

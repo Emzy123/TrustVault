@@ -15,9 +15,25 @@ class UserShell extends StatelessWidget {
 
   final Widget child;
 
+  /// Matches Atlas sample bottom nav: Home · Settings · Goals · Business · Account
   static const _destinations = [
     _NavDestination('/app', 'Home', Icons.home_outlined, Icons.home_rounded),
-    _NavDestination('/app/profile', 'Me', Icons.person_outline, Icons.person_rounded),
+    _NavDestination('/app/settings', 'Settings', Icons.settings_outlined, Icons.settings_rounded),
+    _NavDestination(
+      '/app/goals',
+      'Goals',
+      Icons.school_outlined,
+      Icons.school_rounded,
+      tooltip: 'Life Goals Lab',
+    ),
+    _NavDestination(
+      '/app/business',
+      'Business',
+      Icons.business_center_outlined,
+      Icons.business_center_rounded,
+      tooltip: 'Businesses',
+    ),
+    _NavDestination('/app/profile', 'Account', Icons.account_circle_outlined, Icons.account_circle_rounded),
   ];
 
   @override
@@ -158,6 +174,7 @@ class UserShell extends StatelessWidget {
             backgroundColor: Colors.transparent,
             elevation: 0,
             height: compact ? 64 : 68,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             selectedIndex: selectedIndex,
             destinations: [
               for (final dest in _destinations)
@@ -165,6 +182,7 @@ class UserShell extends StatelessWidget {
                   icon: Icon(dest.icon),
                   selectedIcon: Icon(dest.selectedIcon),
                   label: dest.label,
+                  tooltip: dest.tooltip,
                 ),
             ],
             onDestinationSelected: (index) {
@@ -178,16 +196,33 @@ class UserShell extends StatelessWidget {
   }
 
   int _indexForLocation(String location) {
-    if (location.startsWith('/app/profile')) return 1;
+    if (location.startsWith('/app/settings') ||
+        location.startsWith('/app/profile/security') ||
+        location.startsWith('/app/profile/limits') ||
+        location.startsWith('/app/profile/statements') ||
+        location.startsWith('/app/profile/support')) {
+      return 1;
+    }
+    if (location.startsWith('/app/goals')) return 2;
+    if (location.startsWith('/app/business')) return 3;
+    if (location.startsWith('/app/profile')) return 4;
+    // Crypto and other /app/* flows keep Home selected.
     return 0;
   }
 }
 
 class _NavDestination {
-  const _NavDestination(this.path, this.label, this.icon, this.selectedIcon);
+  const _NavDestination(
+    this.path,
+    this.label,
+    this.icon,
+    this.selectedIcon, {
+    this.tooltip,
+  });
 
   final String path;
   final String label;
   final IconData icon;
   final IconData selectedIcon;
+  final String? tooltip;
 }
