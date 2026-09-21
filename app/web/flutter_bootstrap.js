@@ -25,17 +25,18 @@
     });
   }
 
+  // Reduced from 45 s → 20 s for faster user feedback.
+  // The app typically loads in < 5 s on a decent connection once assets are cached.
   window.setTimeout(function () {
     if (document.getElementById('tv-loading')?.style.display !== 'none') {
       showError(
-        'TrustVault is taking longer than expected to load. Try a hard refresh (Ctrl+Shift+R), ' +
-          'another browser (Chrome or Edge), or disable ad blockers for this site.'
+        'TrustVault is taking longer than expected to load. ' +
+          'Try a hard refresh (Ctrl+Shift+R), another browser (Chrome or Edge), ' +
+          'or disable ad blockers for this site.'
       );
     }
-  }, 45000);
+  }, 20000);
 
-  // Prefer local CanvasKit assets (built with --no-web-resources-cdn) so devices
-  // that block Google CDNs can still start. Fall back to HTML renderer if CanvasKit fails.
   _flutter.loader
     .load({
       onEntrypointLoaded: function (engineInitializer) {

@@ -53,9 +53,24 @@ class ProfileService {
 
   final SupabaseClient _client;
 
-  Future<Profile?> fetchCurrentProfile() async {
+  // In-memory cache: avoids redundant DB round-trips within the same session.
+  // Keyed on user ID so it is automatically invalidated on user change.
+  Profile? _cachedProfile;
+  String? _cachedUserId;
+
+  /// Returns the cached profile if the user hasn't changed; otherwise fetches
+  /// fresh from Supabase and caches the result.
+  Future<Profile?> fetchCurrentProfile({bool forceRefresh = false}) async {
     final user = _client.auth.currentUser;
-    if (user == null) return null;
+    if (user == null) {
+      _clearCacheInternal();
+      return null;
+    }
+
+    // Return cached value if it belongs to the current user.
+    if (!forceRefresh && _cachedUserId == user.id && _cachedProfile != null) {
+      return _cachedProfile;
+    }
 
     var data = await _client
         .from('profiles')
@@ -64,7 +79,7 @@ class ProfileService {
         .maybeSingle();
 
     if (data == null) {
-      // Profile should exist via auth trigger; retry once after brief delay
+      // Profile should exist via auth trigger; retry once after brief delay.
       await Future<void>.delayed(const Duration(milliseconds: 500));
       data = await _client
           .from('profiles')
@@ -73,7 +88,22 @@ class ProfileService {
           .maybeSingle();
     }
 
-    if (data == null) return null;
-    return Profile.fromJson(Map<String, dynamic>.from(data));
+    if (data == null) {
+      _clearCacheInternal();
+      return null;
+    }
+
+    final profile = Profile.fromJson(Map<String, dynamic>.from(data));
+    _cachedProfile = profile;
+    _cachedUserId = user.id;
+    return profile;
+  }
+
+  /// Call after sign-out to purge the cached profile.
+  void clearCache() => _clearCacheInternal();
+
+  void _clearCacheInternal() {
+    _cachedProfile = null;
+    _cachedUserId = null;
   }
 }

@@ -346,43 +346,33 @@ class AppRouter {
         location == '/signup/verify' ||
         location == '/forgot-password';
 
+    // Fast paths that don't need a profile fetch.
     if (_recoveryNotifier.pending) {
       return isResetPassword ? null : '/reset-password';
     }
 
-    if (isResetPassword) {
-      if (isLoggedIn) {
-        final profile = await _profileService.fetchCurrentProfile();
-        return profile?.role.homePath ?? '/app';
-      }
-      return '/forgot-password';
-    }
-
-    if (isOnboarding) {
-      if (isLoggedIn) {
-        final profile = await _profileService.fetchCurrentProfile();
-        return profile?.role.homePath ?? '/app';
-      }
-      final onboardingDone = await OnboardingPrefs.hasCompleted();
-      if (onboardingDone) return '/';
-      return null;
-    }
-
     if (!isLoggedIn) {
+      if (isResetPassword) return '/forgot-password';
       final onboardingDone = await OnboardingPrefs.hasCompleted();
-      if (!onboardingDone) {
-        return '/onboarding';
-      }
-      return isAuthRoute ? null : '/';
+      if (!onboardingDone) return isOnboarding ? null : '/onboarding';
+      return isAuthRoute || isOnboarding ? null : '/';
     }
 
-    if (isAuthRoute) {
-      final profile = await _profileService.fetchCurrentProfile();
+    // User is logged in — fetch profile exactly once and reuse below.
+    // ProfileService caches this per-session so subsequent calls are instant.
+    final profile = await _profileService.fetchCurrentProfile();
+
+    if (isResetPassword) {
       return profile?.role.homePath ?? '/app';
     }
 
-    final profile = await _profileService.fetchCurrentProfile();
+    if (isOnboarding || isAuthRoute) {
+      return profile?.role.homePath ?? '/app';
+    }
+
     if (profile == null) {
+      // Profile missing despite being logged in — sign out defensively.
+      _profileService.clearCache();
       await _authService.signOut();
       return '/';
     }
