@@ -115,13 +115,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onTap: () => context.go('/admin/funding'),
                 ),
                 _MetricCard(
-                  title: 'Pending withdrawals',
-                  value: '${metrics.pendingWithdrawals}',
-                  icon: Icons.outbound_outlined,
-                  highlight: metrics.pendingWithdrawals > 0,
-                  onTap: () => context.go('/admin/withdrawals'),
-                ),
-                _MetricCard(
                   title: 'Open flags',
                   value: '${metrics.openFlags}',
                   icon: Icons.flag_outlined,
@@ -132,7 +125,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   title: '24h volume',
                   value: BalanceVisibility.maskOrFormat(
                     _balancesVisible,
-                    formatNaira(metrics.dailyVolume),
+                    formatCurrency(metrics.dailyVolume),
                   ),
                   icon: Icons.show_chart_rounded,
                 ),
@@ -158,14 +151,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   description: 'User balance funding requests awaiting approval',
                   buttonLabel: 'Go to Funding Queue',
                   onPressed: () => context.go('/admin/funding'),
-                ),
-                const SizedBox(height: 16),
-                _QueueCard(
-                  title: 'Withdrawal Requests',
-                  count: metrics.pendingWithdrawals,
-                  description: 'Pending withdrawals awaiting release or decline',
-                  buttonLabel: 'Go to Withdrawals Queue',
-                  onPressed: () => context.go('/admin/withdrawals'),
                 ),
               ],
             ),

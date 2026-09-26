@@ -18,7 +18,7 @@ void main() {
       );
     }
 
-    test('Unverified profile cannot funding, transfer, or withdraw', () {
+    test('Unverified profile cannot funding or transfer', () {
       final eligibility = WalletEligibility(
         profile: makeProfile(
           accountStatus: AccountStatus.unverified,
@@ -30,7 +30,6 @@ void main() {
       expect(eligibility.canSubmitKyc, isTrue);
       expect(eligibility.canRequestFunding, isFalse);
       expect(eligibility.canTransfer, isFalse);
-      expect(eligibility.canWithdraw, isFalse);
       expect(eligibility.fundingLockReason, contains('Complete identity verification'));
     });
 
@@ -47,7 +46,7 @@ void main() {
       expect(eligibility.fundingLockReason, contains('under review'));
     });
 
-    test('Verified zero-balance profile can request funding but not transfer or withdraw', () {
+    test('Verified zero-balance profile can request funding but not transfer', () {
       final eligibility = WalletEligibility(
         profile: makeProfile(
           accountStatus: AccountStatus.verified,
@@ -58,11 +57,10 @@ void main() {
       expect(eligibility.canSubmitKyc, isFalse);
       expect(eligibility.canRequestFunding, isTrue);
       expect(eligibility.canTransfer, isFalse);
-      expect(eligibility.canWithdraw, isFalse);
       expect(eligibility.transferLockReason, contains('Fund your wallet'));
     });
 
-    test('Active profile with balance can transfer and withdraw', () {
+    test('Active profile with balance can transfer', () {
       final eligibility = WalletEligibility(
         profile: makeProfile(
           accountStatus: AccountStatus.active,
@@ -73,7 +71,6 @@ void main() {
       expect(eligibility.canSubmitKyc, isFalse);
       expect(eligibility.canRequestFunding, isTrue);
       expect(eligibility.canTransfer, isTrue);
-      expect(eligibility.canWithdraw, isTrue);
     });
 
     test('Frozen profile blocks all wallet actions regardless of KYC status', () {
@@ -88,7 +85,6 @@ void main() {
       expect(eligibility.canSubmitKyc, isFalse);
       expect(eligibility.canRequestFunding, isFalse);
       expect(eligibility.canTransfer, isFalse);
-      expect(eligibility.canWithdraw, isFalse);
       expect(eligibility.fundingLockReason, contains('frozen'));
       expect(eligibility.transferLockReason, contains('frozen'));
     });

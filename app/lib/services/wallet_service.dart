@@ -236,26 +236,6 @@ class WalletService {
     return result;
   }
 
-  Future<String> requestWithdrawal({
-    required double amount,
-    String? note,
-  }) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('Not authenticated');
-
-    final params = <String, dynamic>{'p_amount': amount};
-    final trimmedNote = note?.trim();
-    if (trimmedNote != null && trimmedNote.isNotEmpty) {
-      params['p_note'] = trimmedNote;
-    }
-
-    final result = await _client.rpc<String>(
-      'request_withdrawal',
-      params: params,
-    );
-    return result;
-  }
-
   Stream<Profile> watchProfile() {
     final userId = _client.auth.currentUser!.id;
     return _client
@@ -288,7 +268,6 @@ String mapRpcError(Object error) {
     if (message.contains('Could not find the function') &&
         (message.contains('transfer_funds') ||
             message.contains('transfer_fund') ||
-            message.contains('request_withdrawal') ||
             message.contains('submit_funding_request'))) {
       return 'Wallet transfers are not set up on the server. Run supabase/patch_transfer_and_wallet_rpcs.sql in the Supabase SQL Editor.';
     }

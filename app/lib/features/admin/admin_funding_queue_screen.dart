@@ -207,7 +207,7 @@ class _AdminFundingQueueScreenState extends State<AdminFundingQueueScreen> {
                         Text(fullName, style: AppTypography.textTheme.titleMedium),
                         Text(email, style: AppTypography.textTheme.bodySmall),
                         const SizedBox(height: 8),
-                        Text(formatNaira(amount), style: AppTypography.textTheme.headlineSmall?.copyWith(color: AppColors.primaryNavy)),
+                        Text(formatCurrency(amount), style: AppTypography.textTheme.headlineSmall?.copyWith(color: AppColors.primaryNavy)),
                         if (note != null && note.isNotEmpty) Text('Note: $note', style: AppTypography.textTheme.bodySmall),
                         Text('Requested at: ${formatDate(createdAt)}', style: AppTypography.textTheme.bodySmall),
                       ],

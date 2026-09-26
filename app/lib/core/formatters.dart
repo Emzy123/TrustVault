@@ -9,9 +9,6 @@ final _currencyFormat = NumberFormat.currency(
 );
 
 /// Formats [amount] as a USD dollar string, e.g. "$1,234.56".
-String formatNaira(num amount) => _currencyFormat.format(amount);
-
-/// Alias – prefer this name for new code.
 String formatCurrency(num amount) => _currencyFormat.format(amount);
 
 String formatDate(DateTime date) => DateFormat.yMMMd().add_jm().format(date.toLocal());
@@ -72,8 +69,7 @@ String formatErrorMessage(Object error) {
       rawMessage.contains('function public.get_platform_analytics') ||
       rawMessage.contains('function public.submit_funding_request') ||
       rawMessage.contains('function public.review_kyc_submission') ||
-      rawMessage.contains('function public.approve_funding_request') ||
-      rawMessage.contains('function public.review_withdrawal')) {
+      rawMessage.contains('function public.approve_funding_request')) {
     return 'Missing database function. Run "supabase/patch_missing_admin_rpcs.sql" in your Supabase SQL Editor.';
   }
 

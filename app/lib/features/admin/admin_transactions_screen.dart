@@ -109,64 +109,6 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
     }
   }
 
-  Future<void> _reviewWithdrawal(String transactionId, bool approve) async {
-    String? reason;
-    if (!approve) {
-      final controller = TextEditingController();
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Decline Withdrawal'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Decline reason',
-              hintText: 'e.g. Identity verification pending',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Decline'),
-            ),
-          ],
-        ),
-      );
-
-      if (confirm != true) return;
-      reason = controller.text.trim();
-      if (reason.isEmpty) reason = 'Declined by admin during transaction review';
-    }
-
-    try {
-      await AdminService(Supabase.instance.client).reviewWithdrawal(
-        transactionId: transactionId,
-        approve: approve,
-        declineReason: reason,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(approve ? 'Withdrawal approved & released' : 'Withdrawal declined'),
-            backgroundColor: approve ? AppColors.success : AppColors.error,
-          ),
-        );
-        _load();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(mapRpcError(e))),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -176,7 +118,7 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
           sliver: SliverToBoxAdapter(
             child: AdminPageHeader(
               title: 'Transaction Monitor',
-              subtitle: 'Live feed of all wallet transfers, funding, deposits, and withdrawals',
+              subtitle: 'Live feed of all wallet transfers, funding, and deposits',
               onRefresh: _load,
             ),
           ),
@@ -214,7 +156,6 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
                 final status = TransactionStatus.fromString(statusRaw);
                 final txId = tx['id'] as String;
                 final createdAt = DateTime.parse(tx['created_at'] as String);
-                final isPendingWithdrawal = type == 'withdrawal' && statusRaw == 'pending';
 
                 return PremiumCard(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -250,45 +191,21 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text(formatNaira(amount), style: AppTypography.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                                    Text(formatCurrency(amount), style: AppTypography.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                                     StatusChip(status: status, compact: true),
                                   ],
                                 ),
                               ],
                             ),
-                            if (isPendingWithdrawal) ...[
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  OutlinedButton(
-                                    style: OutlinedButton.styleFrom(foregroundColor: AppColors.error),
-                                    onPressed: () => _reviewWithdrawal(txId, false),
-                                    child: const Text('Decline'),
-                                  ),
-                                  FilledButton(
-                                    onPressed: () => _reviewWithdrawal(txId, true),
-                                    child: const Text('Approve'),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.flag_outlined, color: AppColors.error),
-                                    tooltip: 'Raise flag on this transaction',
-                                    onPressed: () => _raiseFlag(txId),
-                                  ),
-                                ],
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: IconButton(
+                                icon: const Icon(Icons.flag_outlined, color: AppColors.error),
+                                tooltip: 'Raise flag on this transaction',
+                                onPressed: () => _raiseFlag(txId),
                               ),
-                            ] else ...[
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: IconButton(
-                                  icon: const Icon(Icons.flag_outlined, color: AppColors.error),
-                                  tooltip: 'Raise flag on this transaction',
-                                  onPressed: () => _raiseFlag(txId),
-                                ),
-                              ),
-                            ],
+                            ),
                           ],
                         )
                       : Row(
@@ -315,24 +232,10 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(formatNaira(amount), style: AppTypography.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                                Text(formatCurrency(amount), style: AppTypography.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                                 StatusChip(status: status, compact: true),
                               ],
                             ),
-                            if (isPendingWithdrawal) ...[
-                              const SizedBox(width: 10),
-                              OutlinedButton(
-                                style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
-                                onPressed: () => _reviewWithdrawal(txId, false),
-                                child: const Text('Decline'),
-                              ),
-                              const SizedBox(width: 6),
-                              FilledButton(
-                                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
-                                onPressed: () => _reviewWithdrawal(txId, true),
-                                child: const Text('Approve'),
-                              ),
-                            ],
                             IconButton(
                               icon: const Icon(Icons.flag_outlined, color: AppColors.error),
                               tooltip: 'Raise flag on this transaction',
@@ -354,8 +257,6 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
         return Icons.swap_horiz;
       case 'deposit':
         return Icons.south_west;
-      case 'withdrawal':
-        return Icons.north_east;
       case 'funding':
         return Icons.add_card;
       default:

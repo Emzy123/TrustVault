@@ -22,9 +22,6 @@ class WalletEligibility {
   bool get canTransfer =>
       !isFrozen && profile.accountStatus == AccountStatus.active;
 
-  bool get canWithdraw =>
-      !isFrozen && profile.accountStatus == AccountStatus.active;
-
   String get fundingLockReason {
     if (isFrozen) return 'Your account is frozen';
     if (profile.kycStatus == KycStatus.notSubmitted) {
@@ -49,6 +46,4 @@ class WalletEligibility {
     }
     return '';
   }
-
-  String get withdrawLockReason => transferLockReason;
 }

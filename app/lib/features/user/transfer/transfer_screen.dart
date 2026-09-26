@@ -124,7 +124,7 @@ class _TransferScreenState extends State<TransferScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              formatNaira(_amount!),
+                              formatCurrency(_amount!),
                               style: AppTypography.balance.copyWith(fontSize: 36),
                             ),
                           ],
@@ -133,7 +133,7 @@ class _TransferScreenState extends State<TransferScreen> {
                       const SizedBox(height: 20),
                       const Divider(height: 1),
                       DetailRow(label: 'Recipient', value: formatAccountNumber(_recipientController.text.trim())),
-                      DetailRow(label: 'Balance after', value: formatNaira(_resultingBalance)),
+                      DetailRow(label: 'Balance after', value: formatCurrency(_resultingBalance)),
                       if (_noteController.text.trim().isNotEmpty)
                         DetailRow(label: 'Note', value: _noteController.text.trim()),
                       if (_error != null) ...[
@@ -176,7 +176,7 @@ class _TransferScreenState extends State<TransferScreen> {
             children: [
               FormPageHeader(
                 title: 'Transfer',
-                subtitle: 'Available: ${formatNaira(widget.availableBalance)}',
+                subtitle: 'Available: ${formatCurrency(widget.availableBalance)}',
               ),
               const SizedBox(height: 24),
               PremiumCard(

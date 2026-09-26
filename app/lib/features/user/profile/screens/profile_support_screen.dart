@@ -28,11 +28,6 @@ class _ProfileSupportScreenState extends State<ProfileSupportScreen> {
           'Transfers between TrustVault accounts are processed instantly using our double-entry atomic ledger engine. Funds are debited and credited immediately with zero fee.',
     ),
     _FaqItem(
-      question: 'What happens when a withdrawal is under review?',
-      answer:
-          'Withdrawals enter a genuine pending review queue. Super Admins verify compliance limits and either approve (debiting balance) or decline with explicit reasons.',
-    ),
-    _FaqItem(
       question: 'How do I upgrade my account daily limits?',
       answer:
           'Complete Level 1 (government ID) for a \$5,000 daily limit, Level 2 (face match) for \$20,000, and Level 3 (proof of address) for \$100,000.',

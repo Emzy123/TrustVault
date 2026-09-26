@@ -307,7 +307,7 @@ class CryptoFormScaffold extends StatelessWidget {
   }
 }
 
-String formatCryptoFiat(double amount) => formatNaira(amount);
+String formatCryptoFiat(double amount) => formatCurrency(amount);
 
 Future<void> simulateCryptoLatency() =>
     Future<void>.delayed(const Duration(milliseconds: 1100));

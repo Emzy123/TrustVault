@@ -115,11 +115,11 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     final balance = widget.account?.balance ?? 0;
     final displayBalance = BalanceVisibility.maskOrFormat(
       _balancesVisible,
-      formatNaira(balance),
+      formatCurrency(balance),
     );
     final availableText = BalanceVisibility.maskOrFormat(
       _balancesVisible,
-      formatNaira(widget.availableBalance),
+      formatCurrency(widget.availableBalance),
     );
 
     return RefreshIndicator(
@@ -194,13 +194,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                       onTap: () => context.go('/app/transfer'),
                     ),
                     QuickActionTile(
-                      label: 'Withdraw',
-                      icon: Icons.account_balance_wallet_outlined,
-                      enabled: eligibility.canWithdraw,
-                      lockReason: eligibility.withdrawLockReason,
-                      onTap: () => context.go('/app/withdraw'),
-                    ),
-                    QuickActionTile(
                       label: 'Crypto',
                       icon: Icons.currency_bitcoin_rounded,
                       enabled: true,
@@ -240,7 +233,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  formatCryptoFiat(CryptoCatalog.totalFiatNgn),
+                                  formatCryptoFiat(CryptoCatalog.totalFiatUsd),
                                   style: AppTypography.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -297,13 +290,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                             child: OutlinedButton(
                               onPressed: () => context.go('/app/crypto/send'),
                               child: const Text('Send'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => context.go('/app/crypto/withdraw'),
-                              child: const Text('Cash out'),
                             ),
                           ),
                         ],

@@ -83,7 +83,6 @@ class ProfileLimitsScreen extends StatelessWidget {
   Widget _buildLimitProgressCard() {
     final dailyLimit = profile.dailyTransferLimit;
     final singleLimit = dailyLimit > 0 ? (dailyLimit * 0.25).clamp(500.0, dailyLimit) : 0.0;
-    final withdrawalLimit = dailyLimit > 0 ? (dailyLimit * 0.2).clamp(200.0, dailyLimit) : 0.0;
 
     return PremiumCard(
       child: Column(
@@ -110,13 +109,6 @@ class ProfileLimitsScreen extends StatelessWidget {
             used: 0,
             total: singleLimit,
             color: AppColors.accentGold,
-          ),
-          const SizedBox(height: 20),
-          _buildMeter(
-            label: 'Daily withdrawal limit',
-            used: 0,
-            total: withdrawalLimit,
-            color: AppColors.success,
           ),
         ],
       ),

@@ -6,7 +6,7 @@ import 'package:trustvault/models/wallet_models.dart';
 
 void main() {
   group('Formatter Tests', () {
-    test('formatNaira / formatCurrency formats positive numbers with comma separators', () {
+    test('formatCurrency formats positive numbers with comma separators', () {
       expect(formatCurrency(0), equals('\$0.00'));
       expect(formatCurrency(500), equals('\$500.00'));
       expect(formatCurrency(12500.5), equals('\$12,500.50'));
@@ -53,7 +53,7 @@ void main() {
         'id': 'acc-789',
         'profile_id': 'p-123',
         'balance': 150000.75,
-        'currency': 'NGN',
+        'currency': 'USD',
         'account_number': '3081928471',
         'is_system': false,
       };

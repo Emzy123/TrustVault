@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/balance_visibility.dart';
-import '../../core/formatters.dart' show formatErrorMessage, formatNaira;
+import '../../core/formatters.dart' show formatErrorMessage, formatCurrency;
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_decorations.dart';
 import '../../core/theme/app_typography.dart';
@@ -160,13 +160,6 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                     onTap: () => context.go('/superadmin/funding'),
                   ),
                   _StatTile(
-                    title: 'Pending Withdrawals',
-                    value: '${metrics.pendingWithdrawals}',
-                    icon: Icons.outbound_outlined,
-                    highlight: metrics.pendingWithdrawals > 0,
-                    onTap: () => context.go('/superadmin/withdrawals'),
-                  ),
-                  _StatTile(
                     title: 'Open Flags',
                     value: '${metrics.openFlags}',
                     icon: Icons.flag_outlined,
@@ -184,7 +177,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                     title: 'Total Volume',
                     value: BalanceVisibility.maskOrFormat(
                       _balancesVisible,
-                      formatNaira(metrics.totalVolume),
+                      formatCurrency(metrics.totalVolume),
                     ),
                     icon: Icons.account_balance_wallet,
                   ),
@@ -200,7 +193,7 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                     title: '7-Day Volume',
                     value: BalanceVisibility.maskOrFormat(
                       _balancesVisible,
-                      formatNaira(analytics.volume7d),
+                      formatCurrency(analytics.volume7d),
                     ),
                     icon: Icons.trending_up,
                   ),
@@ -222,14 +215,6 @@ class _SuperAdminDashboardScreenState extends State<SuperAdminDashboardScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _ActionCard(
-                      title: 'Withdrawal Review Queue',
-                      count: metrics.pendingWithdrawals,
-                      subtitle: 'Honest withdrawal requests awaiting decision',
-                      buttonText: 'Review Withdrawals',
-                      onPressed: () => context.go('/superadmin/withdrawals'),
-                    ),
-                    const SizedBox(height: 16),
                     _ActionCard(
                       title: 'Flag Resolution Queue',
                       count: metrics.openFlags,

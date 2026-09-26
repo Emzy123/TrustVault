@@ -82,32 +82,6 @@ class AdminService {
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchWithdrawalQueue() async {
-    final data = await _client
-        .from('transactions')
-        .select('*, accounts!from_account_id(profiles(id, full_name, email, account_status, kyc_status))')
-        .eq('type', 'withdrawal')
-        .eq('status', 'pending')
-        .order('created_at', ascending: true);
-
-    return List<Map<String, dynamic>>.from(data as List);
-  }
-
-  Future<void> reviewWithdrawal({
-    required String transactionId,
-    required bool approve,
-    String? declineReason,
-  }) async {
-    await _client.rpc(
-      'review_withdrawal',
-      params: {
-        'p_transaction_id': transactionId,
-        'p_approve': approve,
-        'p_decline_reason': declineReason,
-      },
-    );
-  }
-
   Future<List<Profile>> fetchUsers({String? query}) async {
     final hasQuery = query != null && query.trim().isNotEmpty;
     final data = hasQuery

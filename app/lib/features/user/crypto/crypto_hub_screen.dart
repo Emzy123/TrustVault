@@ -14,7 +14,7 @@ class CryptoHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = CryptoCatalog.totalFiatNgn;
+    final total = CryptoCatalog.totalFiatUsd;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
@@ -53,14 +53,24 @@ class CryptoHubScreen extends StatelessWidget {
                         fontSize: 30,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '+${formatCryptoFiat(total * 0.018)} today',
-                      style: AppTypography.textTheme.bodySmall?.copyWith(
-                        color: AppColors.accentGoldLight,
-                        fontWeight: FontWeight.w600,
+                    if (total > 0) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        '+${formatCryptoFiat(total * 0.018)} today',
+                        style: AppTypography.textTheme.bodySmall?.copyWith(
+                          color: AppColors.accentGoldLight,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
+                    ] else ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Deposit or buy to get started',
+                        style: AppTypography.textTheme.bodySmall?.copyWith(
+                          color: AppColors.white.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -86,12 +96,6 @@ class CryptoHubScreen extends StatelessWidget {
                     icon: Icons.send_rounded,
                     enabled: true,
                     onTap: () => context.go('/app/crypto/send'),
-                  ),
-                  QuickActionTile(
-                    label: 'Withdraw',
-                    icon: Icons.account_balance_outlined,
-                    enabled: true,
-                    onTap: () => context.go('/app/crypto/withdraw'),
                   ),
                 ],
               ),
@@ -136,18 +140,9 @@ class CryptoHubScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              formatCryptoFiat(asset.fiatValueNgn),
+                              formatCryptoFiat(asset.fiatValueUsd),
                               style: AppTypography.textTheme.bodySmall?.copyWith(
                                 color: AppColors.textMuted,
-                              ),
-                            ),
-                            Text(
-                              '${asset.changePercent >= 0 ? '+' : ''}${asset.changePercent.toStringAsFixed(1)}%',
-                              style: AppTypography.textTheme.bodySmall?.copyWith(
-                                color: asset.changePercent >= 0
-                                    ? AppColors.success
-                                    : AppColors.error,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],

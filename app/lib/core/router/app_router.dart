@@ -10,7 +10,6 @@ import '../../features/admin/admin_funding_queue_screen.dart';
 import '../../features/admin/admin_kyc_queue_screen.dart';
 import '../../features/admin/admin_shell.dart';
 import '../../features/admin/admin_transactions_screen.dart';
-import '../../features/shared/withdrawals_review_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
@@ -22,12 +21,10 @@ import '../../features/super_admin/super_admin_dashboard_screen.dart';
 import '../../features/super_admin/super_admin_flags_screen.dart';
 import '../../features/super_admin/super_admin_shell.dart';
 import '../../features/super_admin/super_admin_users_screen.dart';
-import '../../features/super_admin/super_admin_withdrawals_screen.dart';
 import '../../features/user/crypto/crypto_buy_screen.dart';
 import '../../features/user/crypto/crypto_deposit_screen.dart';
 import '../../features/user/crypto/crypto_hub_screen.dart';
 import '../../features/user/crypto/crypto_send_screen.dart';
-import '../../features/user/crypto/crypto_withdraw_screen.dart';
 import '../../features/user/funding/funding_request_screen.dart';
 import '../../features/user/history/transaction_history_screen.dart';
 import '../../features/user/kyc/kyc_screens.dart';
@@ -41,7 +38,6 @@ import '../../features/user/transfer/transfer_screen.dart';
 import '../../features/user/user_dashboard_screen.dart';
 import '../../features/user/user_shell.dart';
 import '../../features/user/user_wallet_scope.dart';
-import '../../features/user/withdraw/withdraw_screen.dart';
 import '../../models/profile.dart';
 import '../../models/wallet_models.dart';
 import '../../services/auth_service.dart';
@@ -145,12 +141,9 @@ class AppRouter {
                     path: 'send',
                     builder: (context, state) => const CryptoSendScreen(),
                   ),
-                  GoRoute(
-                    path: 'withdraw',
-                    builder: (context, state) => const CryptoWithdrawScreen(),
-                  ),
                 ],
               ),
+
               GoRoute(
                 path: 'kyc/pending',
                 builder: (context, state) => UserWalletScope(
@@ -191,24 +184,10 @@ class AppRouter {
                 ),
               ),
               GoRoute(
-                path: 'withdraw',
-                builder: (context, state) => UserWalletScope(
-                  builder: (context, profile, account, available, loading, error, refresh) {
-                    if (account == null) {
-                      return const Center(child: Text('Wallet not available'));
-                    }
-                    return WithdrawScreen(
-                      profile: profile,
-                      account: account,
-                      availableBalance: available,
-                    );
-                  },
-                ),
-              ),
-              GoRoute(
                 path: 'history',
                 builder: (context, state) => const _HistoryRoute(),
               ),
+
               GoRoute(
                 path: 'history/:id',
                 builder: (context, state) => _TransactionDetailRoute(
@@ -276,16 +255,10 @@ class AppRouter {
                 builder: (context, state) => const AdminFundingQueueScreen(),
               ),
               GoRoute(
-                path: 'withdrawals',
-                builder: (context, state) => const WithdrawalsReviewScreen(
-                  title: 'Withdrawals Queue',
-                  subtitle: 'Review and release pending user withdrawal requests',
-                ),
-              ),
-              GoRoute(
                 path: 'transactions',
                 builder: (context, state) => const AdminTransactionsScreen(),
               ),
+
               GoRoute(
                 path: 'flags',
                 builder: (context, state) => const AdminFlagsScreen(),
@@ -314,13 +287,10 @@ class AppRouter {
                 builder: (context, state) => const AdminTransactionsScreen(),
               ),
               GoRoute(
-                path: 'withdrawals',
-                builder: (context, state) => const SuperAdminWithdrawalsScreen(),
-              ),
-              GoRoute(
                 path: 'flags',
                 builder: (context, state) => const SuperAdminFlagsScreen(),
               ),
+
               GoRoute(
                 path: 'users',
                 builder: (context, state) => const SuperAdminUsersScreen(),

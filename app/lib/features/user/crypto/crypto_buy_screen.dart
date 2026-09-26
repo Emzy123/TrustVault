@@ -16,19 +16,19 @@ class CryptoBuyScreen extends StatefulWidget {
 
 class _CryptoBuyScreenState extends State<CryptoBuyScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController(text: '50000');
+  final _amountController = TextEditingController(text: '100');
   late CryptoAsset _asset;
   bool _loading = false;
   bool _confirming = false;
   bool _submitted = false;
   String? _reference;
 
-  /// Rough illustrative rates in NGN per unit.
-  static const _ratesNgn = {
-    'BTC': 152500000.0,
-    'ETH': 3856000.0,
-    'USDT': 1600.0,
-    'SOL': 90100.0,
+  /// Rough illustrative rates in USD per unit.
+  static const _ratesUsd = {
+    'BTC': 95000.0,
+    'ETH': 2400.0,
+    'USDT': 1.0,
+    'SOL': 145.0,
   };
 
   @override
@@ -43,11 +43,11 @@ class _CryptoBuyScreenState extends State<CryptoBuyScreen> {
     super.dispose();
   }
 
-  double get _spendNgn => double.tryParse(_amountController.text.trim()) ?? 0;
+  double get _spendUsd => double.tryParse(_amountController.text.trim()) ?? 0;
 
-  double get _rate => _ratesNgn[_asset.symbol] ?? 1;
+  double get _rate => _ratesUsd[_asset.symbol] ?? 1;
 
-  double get _receiveAmount => _spendNgn <= 0 ? 0 : _spendNgn / _rate;
+  double get _receiveAmount => _spendUsd <= 0 ? 0 : _spendUsd / _rate;
 
   String get _receiveLabel {
     final amount = _receiveAmount;
@@ -77,7 +77,7 @@ class _CryptoBuyScreenState extends State<CryptoBuyScreen> {
             'Your ${_asset.symbol} buy order is being processed. Funds will appear in your crypto balance once settled.',
         details: [
           ('Reference', _reference ?? '—'),
-          ('You spend', formatNaira(_spendNgn)),
+          ('You spend', formatCurrency(_spendUsd)),
           ('You receive', '$_receiveLabel ${_asset.symbol}'),
           ('Status', 'Processing'),
         ],
@@ -93,10 +93,10 @@ class _CryptoBuyScreenState extends State<CryptoBuyScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _DetailRow(label: 'Asset', value: '${_asset.name} (${_asset.symbol})'),
-              _DetailRow(label: 'Spend', value: formatNaira(_spendNgn)),
-              _DetailRow(label: 'Rate', value: '${formatNaira(_rate)} / ${_asset.symbol}'),
+              _DetailRow(label: 'Spend', value: formatCurrency(_spendUsd)),
+              _DetailRow(label: 'Rate', value: '${formatCurrency(_rate)} / ${_asset.symbol}'),
               _DetailRow(label: 'You receive', value: '$_receiveLabel ${_asset.symbol}'),
-              _DetailRow(label: 'Payment source', value: 'TrustVault wallet (NGN)'),
+              _DetailRow(label: 'Payment source', value: 'TrustVault wallet (USD)'),
               const SizedBox(height: 8),
               Text(
                 'Market rates refresh continuously. The final fill may vary slightly at execution.',
@@ -126,7 +126,7 @@ class _CryptoBuyScreenState extends State<CryptoBuyScreen> {
 
     return CryptoFormScaffold(
       title: 'Buy crypto',
-      subtitle: 'Purchase digital assets instantly using your TrustVault Naira balance.',
+      subtitle: 'Purchase digital assets instantly using your TrustVault USD balance.',
       child: Form(
         key: _formKey,
         child: PremiumCard(
@@ -147,14 +147,14 @@ class _CryptoBuyScreenState extends State<CryptoBuyScreen> {
                 controller: _amountController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
-                  labelText: 'Amount (NGN)',
+                  labelText: 'Amount (USD)',
                   prefixIcon: Icon(Icons.payments_outlined),
                 ),
                 onChanged: (_) => setState(() {}),
                 validator: (value) {
                   final amount = double.tryParse(value?.trim() ?? '');
-                  if (amount == null || amount < 1000) {
-                    return 'Enter at least ₦1,000';
+                  if (amount == null || amount < 10) {
+                    return 'Enter at least \$10';
                   }
                   return null;
                 },
@@ -170,7 +170,7 @@ class _CryptoBuyScreenState extends State<CryptoBuyScreen> {
                   children: [
                     _DetailRow(
                       label: 'Indicative rate',
-                      value: '${formatNaira(_rate)} / ${_asset.symbol}',
+                      value: '${formatCurrency(_rate)} / ${_asset.symbol}',
                     ),
                     _DetailRow(
                       label: 'You receive',

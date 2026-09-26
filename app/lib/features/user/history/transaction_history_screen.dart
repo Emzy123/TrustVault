@@ -39,7 +39,7 @@ class TransactionHistoryScreen extends StatelessWidget {
               children: [
                 const FormPageHeader(
                   title: 'History',
-                  subtitle: 'All transfers, funding, and withdrawals',
+                  subtitle: 'All transfers and funding activity',
                 ),
                 const SizedBox(height: 20),
                 if (loading && transactions.isEmpty)
@@ -51,7 +51,7 @@ class TransactionHistoryScreen extends StatelessWidget {
                     child: EmptyState(
                       icon: Icons.receipt_long_outlined,
                       title: 'No transactions yet',
-                      message: 'Transfers, funding, and withdrawals will appear here.',
+                      message: 'Transfers and funding will appear here.',
                     ),
                   )
                 else
@@ -140,7 +140,7 @@ class TransactionDetailScreen extends StatelessWidget {
                           Icon(_iconForType(tx.type), color: AppColors.white.withValues(alpha: 0.8), size: 28),
                           const SizedBox(height: 12),
                           Text(
-                            '$prefix${formatNaira(tx.amount)}',
+                            '$prefix${formatCurrency(tx.amount)}',
                             style: AppTypography.balance.copyWith(
                               color: tx.isIncoming ? AppColors.accentGoldLight : AppColors.white,
                             ),
@@ -161,21 +161,6 @@ class TransactionDetailScreen extends StatelessWidget {
                     if (tx.note != null && tx.note!.isNotEmpty) DetailRow(label: 'Note', value: tx.note!),
                     if (tx.declineReason != null && tx.declineReason!.isNotEmpty)
                       DetailRow(label: 'Reason', value: tx.declineReason!),
-                    if (tx.status == TransactionStatus.pending && tx.type == TransactionType.withdrawal) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondaryBlue.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.secondaryBlue.withValues(alpha: 0.15)),
-                        ),
-                        child: Text(
-                          'This withdrawal is under review. You will see the real outcome here when resolved.',
-                          style: AppTypography.textTheme.bodySmall?.copyWith(color: AppColors.secondaryBlue),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -250,7 +235,7 @@ class TransactionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '$prefix${formatNaira(tx.amount)}',
+                    '$prefix${formatCurrency(tx.amount)}',
                     style: AppTypography.textTheme.titleSmall?.copyWith(
                       color: tx.isIncoming ? AppColors.success : AppColors.textDark,
                       fontWeight: FontWeight.w700,

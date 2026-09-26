@@ -7,7 +7,7 @@ class CryptoAsset {
     required this.symbol,
     required this.name,
     required this.balance,
-    required this.fiatValueNgn,
+    required this.fiatValueUsd,
     required this.changePercent,
     required this.color,
     required this.networks,
@@ -17,7 +17,7 @@ class CryptoAsset {
   final String symbol;
   final String name;
   final double balance;
-  final double fiatValueNgn;
+  final double fiatValueUsd;
   final double changePercent;
   final Color color;
   final List<String> networks;
@@ -31,13 +31,14 @@ class CryptoAsset {
 }
 
 abstract final class CryptoCatalog {
+  /// Catalog assets start at zero until the user deposits or buys.
   static const assets = <CryptoAsset>[
     CryptoAsset(
       symbol: 'BTC',
       name: 'Bitcoin',
-      balance: 0.084210,
-      fiatValueNgn: 12845000,
-      changePercent: 2.4,
+      balance: 0,
+      fiatValueUsd: 0,
+      changePercent: 0,
       color: Color(0xFFF7931A),
       networks: ['Bitcoin', 'Lightning'],
       depositAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
@@ -45,9 +46,9 @@ abstract final class CryptoCatalog {
     CryptoAsset(
       symbol: 'ETH',
       name: 'Ethereum',
-      balance: 1.250000,
-      fiatValueNgn: 4820000,
-      changePercent: -0.8,
+      balance: 0,
+      fiatValueUsd: 0,
+      changePercent: 0,
       color: Color(0xFF627EEA),
       networks: ['Ethereum', 'Base', 'Arbitrum'],
       depositAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1',
@@ -55,9 +56,9 @@ abstract final class CryptoCatalog {
     CryptoAsset(
       symbol: 'USDT',
       name: 'Tether',
-      balance: 2450.00,
-      fiatValueNgn: 3920000,
-      changePercent: 0.1,
+      balance: 0,
+      fiatValueUsd: 0,
+      changePercent: 0,
       color: Color(0xFF26A17B),
       networks: ['TRC-20', 'ERC-20', 'BEP-20'],
       depositAddress: 'TXyz9kPqRmN2vLwHsJcFdUeBgYa4pQr8Mn',
@@ -65,17 +66,17 @@ abstract final class CryptoCatalog {
     CryptoAsset(
       symbol: 'SOL',
       name: 'Solana',
-      balance: 18.640000,
-      fiatValueNgn: 1680000,
-      changePercent: 4.1,
+      balance: 0,
+      fiatValueUsd: 0,
+      changePercent: 0,
       color: Color(0xFF9945FF),
       networks: ['Solana'],
       depositAddress: '7EqQdEULxWcraVx3mXKFjc84LhCkMGZCkRuDVJXtpsKV',
     ),
   ];
 
-  static double get totalFiatNgn =>
-      assets.fold(0, (sum, asset) => sum + asset.fiatValueNgn);
+  static double get totalFiatUsd =>
+      assets.fold(0, (sum, asset) => sum + asset.fiatValueUsd);
 
   static CryptoAsset bySymbol(String symbol) =>
       assets.firstWhere((a) => a.symbol == symbol, orElse: () => assets.first);

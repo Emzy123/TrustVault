@@ -155,7 +155,7 @@ class _AdminFlagsScreenState extends State<AdminFlagsScreen> {
                             const SizedBox(height: 4),
                             if (flag.userEmail != null) Text('User: ${flag.userEmail}', style: AppTypography.textTheme.bodySmall),
                             if (flag.transactionAmount != null)
-                              Text('Tx: ${flag.transactionType?.toUpperCase()} · ${formatNaira(flag.transactionAmount!)}', style: AppTypography.textTheme.bodySmall),
+                              Text('Tx: ${flag.transactionType?.toUpperCase()} · ${formatCurrency(flag.transactionAmount!)}', style: AppTypography.textTheme.bodySmall),
                             Text('Raised at: ${formatDate(flag.createdAt)}', style: AppTypography.textTheme.bodySmall),
                             if (flag.resolutionNote != null) Text('Resolution: ${flag.resolutionNote}', style: AppTypography.textTheme.bodySmall),
                           ],
